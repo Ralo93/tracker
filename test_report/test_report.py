@@ -185,7 +185,7 @@ class TestSmartAggregation(unittest.TestCase):
         )
         segments = [s.strip() for s in desc.split("|") if s.strip()]
         num_blocks = len(segments)  # enough blocks to hold all segments
-        entry = _make_manual(desc, "2026-04-16", "10:00", BM * num_blocks)
+        entry = _make_manual(desc, "2026-04-13", "10:00", BM * num_blocks)
         rows = report.make_rows([], [entry])
         manual = sorted(
             [r for r in rows if r.get("Beschreibung", "") not in ("", "—")],

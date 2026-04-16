@@ -456,6 +456,29 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
     # so auto-slots can avoid them
     occupied: list[tuple[datetime, datetime]] = []
 
+    # ── Tier 0: emit prefilled meeting slots as filled rows ──────────────────
+    # Gather all active dates from aggs + manual entries
+    active_dates: set[str] = set()
+    for agg in aggs:
+        active_dates.add(agg["date"])
+    for entry in manual_entries:
+        active_dates.add(entry["date"])
+
+    for date_str in sorted(active_dates):
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+        dow_de = WEEKDAYS_DE[date.weekday()]
+        for ps, pe in _prefilled_blocks(date):
+            occupied.append((ps, pe))
+            rows.append({
+                "Wochentag":    dow_de,
+                "Datum":        date.strftime("%d.%m.%Y"),
+                "Von":          ps.strftime("%H:%M"),
+                "Bis":          pe.strftime("%H:%M"),
+                "Beschreibung": "Meeting (prefilled)",
+                "_priority":    0,
+                "_start":       ps,
+            })
+
     def overlaps_any(start: datetime, end: datetime,
                      blocks: list[tuple[datetime, datetime]]) -> bool:
         return any(start < be and end > bs for bs, be in blocks)
@@ -532,14 +555,6 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
     # ── Tier 2: place auto-detected slots ────────────────────────────────────────────────
     # Auto-slots stay at their real event times; if they overlap a protected window
     # (prefilled meeting or manual entry), they get clipped — never pushed forward.
-    # If an auto-slot overlaps a manual entry, its description is merged into that entry.
-    manual_windows: list[tuple[datetime, datetime, int]] = []  # (start, end, row_index)
-    for i, r in enumerate(rows):
-        if r.get("_priority") == 1:
-            manual_windows.append((r["_start"], r["_start"] + timedelta(
-                minutes=int((datetime.strptime(r["Bis"], "%H:%M") -
-                             datetime.strptime(r["Von"], "%H:%M")).total_seconds() / 60)),
-                i))
 
     for agg in aggs:
         date      = datetime.strptime(agg["date"], "%Y-%m-%d")
@@ -547,25 +562,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
         start     = round_down(agg["t0"], BLOCK_MINUTES)
         end       = round_up(agg["t1"],   BLOCK_MINUTES)
 
-        # Check if this auto-slot overlaps any manual entry → merge description
         desc = build_description(agg)
-        merged_parts: set[str] = set()
-        if desc:
-            # Split into individual parts for dedup
-            auto_parts = [p.strip() for p in desc.split(" | ")]
-            for ms, me, mi in manual_windows:
-                if start < me and end > ms:
-                    existing_parts = set(p.strip() for p in rows[mi]["Beschreibung"].split(" | "))
-                    new_parts = [p for p in auto_parts if p not in existing_parts]
-                    if new_parts:
-                        rows[mi]["Beschreibung"] += " | " + " | ".join(new_parts)
-                    # Track all parts that were merged (existing + new)
-                    merged_parts.update(auto_parts)
-
-        # If parts were merged into manual entries, remove them from the fragment description
-        if merged_parts:
-            remaining = [p for p in desc.split(" | ") if p.strip() not in merged_parts]
-            desc = " | ".join(remaining) if remaining else ""
 
         # Build protected windows: prefilled meetings + placed manual entries
         protected = sorted(
@@ -607,7 +604,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
     # Sort all rows by date + start time, then strip internal keys
     rows.sort(key=lambda r: (r["Datum"], r["_start"]))
 
-    # Merge consecutive rows on the same date with identical descriptions
+    # Merge consecutive rows with identical descriptions on the same date
     merged: list[dict] = []
     for r in rows:
         if (merged
