@@ -1,0 +1,29 @@
+{
+  "logDirectory": "/Users/rvonlottne001/Documents/logs/jsonl",
+  "idleThresholdSeconds": 300,
+  "report": {
+    "repositories": [
+      "/Users/rvonlottne001/repositories/GPT4Gov-Lib-File-Processing",
+      "/Users/rvonlottne001/repositories/GPT4Gov-Doc_Translation"
+    ],
+    "gapMinutes": 10,
+    "minSlotMinutes": 5,
+    "blockMinutes": 15,
+    "skipApps": ["Code", "Finder", "loginwindow", "universalAccessAuthWarn",
+                  "UserNotificationCenter", "WorkLogger", "Terminal"],
+    "skipSafariExact": ["favorites://", "Personal Desktop", "Start Page",
+                         "502 Bad Gateway", "Untitled", "Just a moment..."],
+    "skipSafariContains": ["#code=", "spa-signin-oidc", "access_token=",
+                            "?code=", "session_state=", "#loginHint=",
+                            "windows.cloud.microsoft", "Sign in to your account",
+                            "Windows App"],
+    "prefilledSlots": {
+      "comment": "These are recurring meetings already in the Excel. Work slots that overlap them will be pushed to the nearest free time.",
+      "Monday":    [],
+      "Tuesday":   ["09:00-09:15", "09:15-10:00"],
+      "Wednesday": ["09:00-09:15", "09:30-09:45", "13:30-14:00", "15:00-16:00"],
+      "Thursday":  ["09:00-09:15", "09:30-09:45"],
+      "Friday":    ["09:00-09:15", "09:30-09:45"]
+    }
+  }
+}
