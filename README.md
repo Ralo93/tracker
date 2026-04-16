@@ -2,7 +2,7 @@
 
 A lightweight macOS menu-bar app that silently tracks your work activity and generates weekly Excel timesheets — enriched with git commits, meetings, and browser tabs.
 
-![Report Output](imgv4.png)
+![Report Output](assets/imgv4.png)
 
 ## Install
 
@@ -30,6 +30,11 @@ On first launch grant **Accessibility**, **Screen Recording**, and **Safari Auto
 - Prefilled meeting slots (immovable tier-0 rows)
 - Configurable noise filters, block grid, retention, and Safari privacy controls
 - 113 automated tests gate every build
+- Configurable via Preferences GUI (4 tabs)
+
+## Menu Bar
+
+![Menu](assets/menu.png)
 
 ## Shortcuts
 
@@ -39,6 +44,12 @@ On first launch grant **Accessibility**, **Screen Recording**, and **Safari Auto
 | `Cmd+E` | Export weekly report (.xlsx) |
 | `Cmd+,` | Preferences |
 | `Cmd+Q` | Quit |
+
+![Quick Log](assets/quicklog.png)
+
+## Preferences
+
+![Preferences](assets/preferences.png)
 
 ## Example Logs
 
@@ -53,31 +64,6 @@ Each day produces a `YYYY-MM-DD.jsonl` file:
 {"event":"screen_lock","timestamp":"2026-04-15T12:00:00"}
 {"event":"screen_unlock","timestamp":"2026-04-15T13:00:00"}
 {"description":"Sprint Planning Prep","duration_minutes":60,"event":"manual_entry","time":"17:45","timestamp":"2026-04-15T17:45:33"}
-```
-
-## Report Output
-
-The exported `.xlsx` groups activity per time block with bullet-pointed descriptions:
-
-```
-Meetings:
-• Florentin Rauscher
-• Sven Metscher
-
-Commits:
-• [WorkLogger] fix config, add tests, refactor report
-• [GPT4Gov] update pipeline
-
-VS Code:
-• WorkLogger (57min)
-• GPT4Gov-Converter-App (23min)
-
-Apps:
-• Microsoft Teams (10min)
-
-Web:
-• Azure DevOps (12min)
-• GitHub (5min)
 ```
 
 
