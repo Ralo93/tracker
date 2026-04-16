@@ -2,7 +2,7 @@
 
 A lightweight macOS menu-bar app that silently tracks your work activity and generates weekly Excel timesheets — enriched with git commits, meetings, and browser tabs.
 
-![Report Output](assets/imgv4.png)
+<img src="assets/imgv4.png" width="880" alt="Report Output">
 
 ## Install
 
@@ -32,10 +32,6 @@ On first launch grant **Accessibility**, **Screen Recording**, and **Safari Auto
 - 113 automated tests gate every build
 - Configurable via Preferences GUI (4 tabs)
 
-## Menu Bar
-
-![Menu](assets/menu.png)
-
 ## Shortcuts
 
 | Shortcut | Action |
@@ -45,11 +41,13 @@ On first launch grant **Accessibility**, **Screen Recording**, and **Safari Auto
 | `Cmd+,` | Preferences |
 | `Cmd+Q` | Quit |
 
-![Quick Log](assets/quicklog.png)
-
-## Preferences
-
-![Preferences](assets/preferences.png)
+<p>
+  <img src="assets/menu.png" width="200" alt="Menu">
+  &nbsp;&nbsp;
+  <img src="assets/quicklog.png" width="300" alt="Quick Log">
+  &nbsp;&nbsp;
+  <img src="assets/preferences.png" width="380" alt="Preferences">
+</p>
 
 ## Example Logs
 
