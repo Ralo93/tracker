@@ -2,7 +2,7 @@
 
 A lightweight macOS menu-bar app that silently tracks your work activity and generates weekly Excel timesheets — enriched with git commits, meetings, and browser tabs.
 
-![Report Output](img.png)
+![Report Output](imgv2.png)
 
 ## Install
 
