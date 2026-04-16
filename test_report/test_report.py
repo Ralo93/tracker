@@ -67,7 +67,7 @@ class TestSmartAggregation(unittest.TestCase):
         """A manual entry that fits in one block should NOT be split."""
         entry = _make_manual("Task A | Task B", "2026-04-13", "10:00", BM)
         rows = report.make_rows([], [entry])
-        manual = [r for r in rows if "MANUAL" in r.get("Beschreibung", "")]
+        manual = [r for r in rows if "Manual:" in r.get("Beschreibung", "")]
         self.assertEqual(len(manual), 1, "Single block should produce 1 row")
         self.assertIn("Task A", manual[0]["Beschreibung"])
         self.assertIn("Task B", manual[0]["Beschreibung"])
@@ -116,7 +116,7 @@ class TestSmartAggregation(unittest.TestCase):
         """A single topic spanning 2 blocks should NOT be split."""
         entry = _make_manual("Just one task", "2026-04-13", "10:00", BM * 2)
         rows = report.make_rows([], [entry])
-        manual = [r for r in rows if "MANUAL" in r.get("Beschreibung", "")]
+        manual = [r for r in rows if "Manual:" in r.get("Beschreibung", "")]
         self.assertEqual(len(manual), 1, "Single segment → single row, no split")
         self.assertIn("Just one task", manual[0]["Beschreibung"])
 
@@ -215,7 +215,8 @@ class TestTeamsFiltering(unittest.TestCase):
             "Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"
         ])
         desc = report.build_description(agg)
-        self.assertIn("Meeting: Florentin Rauscher", desc)
+        self.assertIn("Meetings:", desc)
+        self.assertIn("• Florentin Rauscher", desc)
 
     def test_chat_excluded(self):
         """Teams window that is just a chat should NOT appear individually."""
@@ -243,7 +244,7 @@ class TestTeamsFiltering(unittest.TestCase):
             "PM-Chatgruppe | Microsoft Teams",
         ])
         desc = report.build_description(agg)
-        self.assertIn("Meeting: Sven Metscher", desc)
+        self.assertIn("• Sven Metscher", desc)
         self.assertNotIn("KI@BMF Dev", desc)
         self.assertNotIn("PM-Chatgruppe", desc)
 
@@ -260,7 +261,7 @@ class TestTeamsFiltering(unittest.TestCase):
         """No teams windows → no teams in description."""
         agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[])
         desc = report.build_description(agg)
-        self.assertNotIn("Meeting:", desc)
+        self.assertNotIn("Meetings:", desc)
         self.assertNotIn("Teams:", desc)
 
     def test_meeting_with_only_noise_segments(self):
@@ -269,9 +270,8 @@ class TestTeamsFiltering(unittest.TestCase):
             "Microsoft Teams | Kompakte Besprechungsansicht | Calendar"
         ])
         desc = report.build_description(agg)
-        # All meaningful segments filtered → Meeting: Calendar would appear
-        # but "Calendar" is in the exclusion set, so no meeting line
-        self.assertNotIn("Meeting:", desc)
+        # All meaningful segments filtered → no Meetings group at all
+        self.assertNotIn("Meetings:", desc)
 
 
 # ==============================================================================
@@ -324,13 +324,15 @@ class TestBuildDescription(unittest.TestCase):
         agg = _make_agg("2026-04-13", "09:00", "10:00",
                         commits=[{"repo": "MyApp", "msg": "fix bug", "sha": "abc123", "ts": datetime(2026, 4, 13, 9, 15)}])
         desc = report.build_description(agg)
-        self.assertIn("COMMIT [MyApp]: fix bug", desc)
+        self.assertIn("Commits:", desc)
+        self.assertIn("• [MyApp] fix bug", desc)
 
     def test_vscode_projects_shown(self):
         agg = _make_agg("2026-04-13", "09:00", "10:00",
                         proj_sec={"MyProject": 900})
         desc = report.build_description(agg)
-        self.assertIn("MyProject (15min)", desc)
+        self.assertIn("VS Code:", desc)
+        self.assertIn("• MyProject (15min)", desc)
 
     def test_vscode_projects_under_threshold_hidden(self):
         agg = _make_agg("2026-04-13", "09:00", "10:00",
@@ -357,7 +359,8 @@ class TestBuildDescription(unittest.TestCase):
         agg = _make_agg("2026-04-13", "09:00", "10:00",
                         manual_entries=[{"description": "Quick task"}])
         desc = report.build_description(agg)
-        self.assertIn("MANUAL: Quick task", desc)
+        self.assertIn("Manual:", desc)
+        self.assertIn("• Quick task", desc)
 
 
 # ==============================================================================
@@ -457,8 +460,8 @@ class TestSafariTimeAccumulation(unittest.TestCase):
                         safari=["Azure DevOps", "GitHub"],
                         safari_sec={"Azure DevOps": 720, "GitHub": 300})
         desc = report.build_description(agg)
-        self.assertIn("Azure DevOps (12min)", desc)
-        self.assertIn("GitHub (5min)", desc)
+        self.assertIn("• Azure DevOps (12min)", desc)
+        self.assertIn("• GitHub (5min)", desc)
 
     def test_time_hidden_when_disabled(self):
         report.SHOW_SAFARI_TIME = False
@@ -475,11 +478,12 @@ class TestSafariTimeAccumulation(unittest.TestCase):
                         safari=["Low", "High", "Mid"],
                         safari_sec={"Low": 60, "High": 900, "Mid": 300})
         desc = report.build_description(agg)
-        web_part = [p for p in desc.split(" | ") if p.startswith("Web:")][0]
-        # High should appear before Mid, Mid before Low
-        self.assertIn("High (15min)", web_part)
-        high_pos = web_part.index("High")
-        mid_pos = web_part.index("Mid")
+        # Find the Web: group
+        self.assertIn("Web:", desc)
+        self.assertIn("• High (15min)", desc)
+        # High should appear before Mid
+        high_pos = desc.index("High")
+        mid_pos = desc.index("Mid")
         self.assertLess(high_pos, mid_pos)
 
     def test_short_tabs_no_duration_label(self):

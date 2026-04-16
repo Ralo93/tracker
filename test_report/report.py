@@ -349,15 +349,29 @@ def round_up(dt: datetime, minutes: int) -> datetime:
 # ── Description builder ───────────────────────────────────────────────────────
 
 def build_description(agg: dict) -> str:
-    parts = []
+    """Build a grouped, bullet-pointed description for an xlsx cell.
 
-    # ── 0. Manual entries — highest priority ──────────────────────────────
-    for m in agg.get("manual_entries", []):
-        parts.append(f"MANUAL: {m['description']}")
+    Groups:
+      • Manual entries
+      • Meetings
+      • Commits (grouped by repo)
+      • VS Code projects
+      • Apps
+      • Web / Safari
+    Each group gets a header line; items within are bulleted with "• ".
+    Groups are separated by newlines for readability in wrapped Excel cells.
+    """
+    B = "• "                       # bullet prefix
+    groups: list[str] = []         # each element = one group block
 
-    # ── 1. Teams — only list individual calls/meetings, not chats/channels ───
+    # ── 0. Manual entries ─────────────────────────────────────────────────
+    manual_lines = [f"{B}{m['description']}" for m in agg.get("manual_entries", [])]
+    if manual_lines:
+        groups.append("Manual:\n" + "\n".join(manual_lines))
+
+    # ── 1. Meetings ──────────────────────────────────────────────────────
+    meeting_lines: list[str] = []
     for w in agg["teams"]:
-        # "Kompakte Besprechungsansicht" in the raw title = actual call/meeting
         if "Kompakte Besprechungsansicht" not in w:
             continue
         segments = [s.strip() for s in w.split("|")]
@@ -366,29 +380,40 @@ def build_description(agg: dict) -> str:
                        "Chat", "Calendar | Calendar")]
         if not meaningful:
             continue
-        label = f"Meeting: {meaningful[0]}"
-        if label not in parts:
-            parts.append(label)
+        label = f"{B}{meaningful[0]}"
+        if label not in meeting_lines:
+            meeting_lines.append(label)
+    if meeting_lines:
+        groups.append("Meetings:\n" + "\n".join(meeting_lines))
 
-    # ── 2. Commits ────────────────────────────────────────────────────────────
+    # ── 2. Commits (grouped by repo) ────────────────────────────────────
+    commits_by_repo: dict[str, list[str]] = {}
     for c in agg["commits"]:
-        parts.append(f"COMMIT [{c['repo']}]: {c['msg']}")
+        commits_by_repo.setdefault(c["repo"], []).append(c["msg"])
+    if commits_by_repo:
+        commit_lines = [f"{B}[{repo}] {', '.join(msgs)}" for repo, msgs in commits_by_repo.items()]
+        groups.append("Commits:\n" + "\n".join(commit_lines))
 
-    # ── 3. VS Code projects by time ───────────────────────────────────────────
-    for proj, sec in agg["proj_sec"].items():
-        if sec >= 300 and proj not in ("Save As", "unknown"):
-            parts.append(f"{proj} ({_fmt(sec)})")
+    # ── 3. VS Code projects ─────────────────────────────────────────────
+    proj_lines = [
+        f"{B}{proj} ({_fmt(sec)})"
+        for proj, sec in agg["proj_sec"].items()
+        if sec >= 300 and proj not in ("Save As", "unknown")
+    ]
+    if proj_lines:
+        groups.append("VS Code:\n" + "\n".join(proj_lines))
 
-    # ── 4. All apps with ≥5min, except noise apps ─────────────────────────────
-    for app, sec in agg["app_sec"].items():
-        if app in SKIP_APPS:
-            continue
-        if sec >= 300:
-            parts.append(f"{app} ({_fmt(sec)})")
+    # ── 4. Apps ──────────────────────────────────────────────────────────
+    app_lines = [
+        f"{B}{app} ({_fmt(sec)})"
+        for app, sec in agg["app_sec"].items()
+        if app not in SKIP_APPS and sec >= 300
+    ]
+    if app_lines:
+        groups.append("Apps:\n" + "\n".join(app_lines))
 
-    # ── 5. Safari tabs — skip noise and OAuth/token redirect URLs ─────────────
+    # ── 5. Safari / Web ─────────────────────────────────────────────────
     if SHOW_SAFARI_TIME:
-        # Show Safari tabs ranked by accumulated time (with duration)
         safari_time = agg.get("safari_sec", {})
         safari_with_time = [
             (tab, safari_time.get(tab, 0))
@@ -397,16 +422,15 @@ def build_description(agg: dict) -> str:
             and tab not in SKIP_SAFARI_EXACT
             and not any(s in tab for s in SKIP_SAFARI_CONTAINS)
         ]
-        # Sort by time descending, show top 5 with ≥30s
         safari_with_time.sort(key=lambda x: -x[1])
-        safari_labels = []
+        web_lines: list[str] = []
         for tab, sec in safari_with_time[:5]:
             if sec >= 30:
-                safari_labels.append(f"{tab} ({_fmt(sec)})")
+                web_lines.append(f"{B}{tab} ({_fmt(sec)})")
             else:
-                safari_labels.append(tab)
-        if safari_labels:
-            parts.append("Web: " + "; ".join(safari_labels))
+                web_lines.append(f"{B}{tab}")
+        if web_lines:
+            groups.append("Web:\n" + "\n".join(web_lines))
     else:
         safari_filtered = [
             t for t in agg["safari"]
@@ -415,9 +439,10 @@ def build_description(agg: dict) -> str:
             and not any(s in t for s in SKIP_SAFARI_CONTAINS)
         ]
         if safari_filtered:
-            parts.append("Web: " + "; ".join(safari_filtered[:5]))
+            web_lines = [f"{B}{t}" for t in safari_filtered[:5]]
+            groups.append("Web:\n" + "\n".join(web_lines))
 
-    return " | ".join(parts) if parts else "—"
+    return "\n\n".join(groups) if groups else "—"
 
 def _fmt(sec: float) -> str:
     m = int(sec / 60)
@@ -528,7 +553,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
                 "Datum":        date.strftime("%d.%m.%Y"),
                 "Von":          start.strftime("%H:%M"),
                 "Bis":          end.strftime("%H:%M"),
-                "Beschreibung": f"MANUAL: {desc}",
+                "Beschreibung": f"Manual:\n• {desc}",
                 "_priority":    1,
                 "_start":       start,
             })
@@ -689,9 +714,9 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
             cell.alignment = Alignment(wrap_text=True, vertical="top")
             if fill:
                 cell.fill = fill
-        # auto height: rough 15pt per wrapped line in description col
+        # auto height: 15pt per line in description col
         desc = row.get("Beschreibung", "")
-        lines = max(1, -(-len(desc) // 80))  # ceiling division
+        lines = max(1, desc.count("\n") + 1)
         ws.row_dimensions[row_idx].height = max(15, lines * 15)
 
     ws.freeze_panes = "A2"
