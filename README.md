@@ -41,13 +41,17 @@ On first launch grant **Accessibility**, **Screen Recording**, and **Safari Auto
 | `Cmd+,` | Preferences |
 | `Cmd+Q` | Quit |
 
-<p>
-  <img src="assets/menu.png" width="200" alt="Menu">
-  &nbsp;&nbsp;
-  <img src="assets/quicklog.png" width="300" alt="Quick Log">
-  &nbsp;&nbsp;
-  <img src="assets/preferences.png" width="380" alt="Preferences">
-</p>
+**Menu Bar**
+
+<img src="assets/menu.png" width="491" alt="Menu">
+
+**Quick Log** (`Cmd+Shift+L`)
+
+<img src="assets/quicklog.png" width="674" alt="Quick Log">
+
+**Preferences** (`Cmd+,`)
+
+<img src="assets/preferences.png" width="832" alt="Preferences">
 
 ## Example Logs
 
