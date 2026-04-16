@@ -248,14 +248,13 @@ class TestTeamsFiltering(unittest.TestCase):
         self.assertNotIn("KI@BMF Dev", desc)
         self.assertNotIn("PM-Chatgruppe", desc)
 
-    def test_teams_app_time_still_shown(self):
-        """Teams should still appear in the app time summary if ≥5min."""
+    def test_teams_app_time_skipped(self):
+        """Teams is in SKIP_APPS, so it should NOT appear in the Apps group."""
         agg = _make_agg("2026-04-13", "09:00", "10:00",
                         teams=["Chat stuff | Microsoft Teams"],
                         app_sec={"Microsoft Teams": 600})
         desc = report.build_description(agg)
-        # Chat not listed individually, but app time IS shown
-        self.assertIn("Microsoft Teams (10min)", desc)
+        self.assertNotIn("Microsoft Teams (10min)", desc)
 
     def test_no_teams_entries_produces_empty(self):
         """No teams windows → no teams in description."""

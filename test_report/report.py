@@ -47,10 +47,11 @@ REPOS            = [Path(p) for p in _rep.get("repositories", [])]
 GAP_MINUTES      = _rep.get("gapMinutes",      10)
 MIN_SLOT_MINUTES = _rep.get("minSlotMinutes",    5)
 BLOCK_MINUTES    = _rep.get("blockMinutes",     30)
-SKIP_APPS        = set(_rep.get("skipApps", [
+SKIP_APPS        = {
     "Code", "Finder", "loginwindow", "universalAccessAuthWarn",
-    "UserNotificationCenter", "WorkLogger", "Terminal"
-]))
+    "UserNotificationCenter", "WorkLogger", "Terminal",
+    "Safari", "Microsoft Teams",
+} | set(_rep.get("skipApps", []))
 # Hardcoded noise that is always filtered regardless of user config
 _BUILTIN_SAFARI_EXACT = {
     "favorites://", "Personal Desktop", "Start Page", "502 Bad Gateway", "Untitled",
