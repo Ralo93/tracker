@@ -25,7 +25,7 @@ A lightweight macOS menu bar app that tracks your work activity and logs it as J
 ### Build the app
 
 ```sh
-git clone <repo-url> WorkLogger
+git clone https://github.com/Ralo93/tracker.git WorkLogger
 cd WorkLogger
 make app
 ```
