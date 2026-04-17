@@ -12,7 +12,7 @@ xcode-select --install
 pip3 install openpyxl
 
 # Build & install
-git clone https://github.com/Ralo93/tracker.git WorkLogger
+git clone -b main https://github.com/Ralo93/tracker.git WorkLogger
 cd WorkLogger
 make app
 ```
