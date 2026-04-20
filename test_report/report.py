@@ -389,7 +389,7 @@ def build_description(agg: dict) -> str:
 
     # ── 2. Commits (grouped by repo) ────────────────────────────────────
     commits_by_repo: dict[str, list[str]] = {}
-    for c in agg["commits"]:
+    for c in agg.get("commits", []):
         commits_by_repo.setdefault(c["repo"], []).append(c["msg"])
     if commits_by_repo:
         commit_lines = [f"{B}[{repo}] {', '.join(msgs)}" for repo, msgs in commits_by_repo.items()]

@@ -1,8 +1,8 @@
 APP_NAME = WorkLogger
 BUNDLE_ID = com.worklogger.app
-DESKTOP = $(HOME)/Desktop
+APP_DIR = /Applications
 BUILD_DIR = .build/release
-APP_BUNDLE = $(DESKTOP)/$(APP_NAME).app
+APP_BUNDLE = $(APP_DIR)/$(APP_NAME).app
 BINARY = $(BUILD_DIR)/$(APP_NAME)
 CERT_NAME = WorkLogger Dev
 VENV = .build/venv

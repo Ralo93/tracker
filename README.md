@@ -2,8 +2,6 @@
 
 A lightweight macOS menu-bar app that silently tracks your work activity and generates weekly Excel timesheets — enriched with git commits, meetings, and browser tabs.
 
-Python dependencies (`openpyxl`, `pytest`) are installed automatically into isolated virtual environments during the build — no manual `pip install` required.
-
 <img src="assets/imgv4.png" width="880" alt="Report Output">
 
 ## Install
@@ -18,8 +16,8 @@ cd WorkLogger
 make app
 ```
 
-Once the build succeeds a new `WorkLogger.app` appears on your Desktop.
-Double-click it and grant every permission it requests (Accessibility, Screen Recording, Safari Automation) — you may need to enter your password.
+Once the build succeeds `WorkLogger.app` is installed to `/Applications` and launches automatically.
+Grant every permission it requests (Accessibility, Screen Recording, Safari Automation) — you may need to enter your password.
 After that the app shows up in the menu bar where you can open Preferences or try exporting a report after a while.
 
 ## Features
