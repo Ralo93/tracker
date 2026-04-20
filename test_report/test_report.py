@@ -128,12 +128,15 @@ class TestSmartAggregation(unittest.TestCase):
             [r for r in rows if r.get("Beschreibung", "") not in ("", "\u2014")],
             key=lambda r: r["Von"]
         )
+        def _hm(base_h, total_min):
+            m = base_h * 60 + total_min
+            return f"{m // 60:02d}:{m % 60:02d}"
         self.assertEqual(manual[0]["Von"], "10:00")
-        self.assertEqual(manual[0]["Bis"], f"{10:02d}:{BM:02d}")
-        self.assertEqual(manual[1]["Von"], f"{10:02d}:{BM:02d}")
-        self.assertEqual(manual[1]["Bis"], f"{10 + (BM * 2) // 60:02d}:{(BM * 2) % 60:02d}")
-        self.assertEqual(manual[2]["Von"], f"{10 + (BM * 2) // 60:02d}:{(BM * 2) % 60:02d}")
-        self.assertEqual(manual[2]["Bis"], f"{10 + (BM * 3) // 60:02d}:{(BM * 3) % 60:02d}")
+        self.assertEqual(manual[0]["Bis"], _hm(10, BM))
+        self.assertEqual(manual[1]["Von"], _hm(10, BM))
+        self.assertEqual(manual[1]["Bis"], _hm(10, BM * 2))
+        self.assertEqual(manual[2]["Von"], _hm(10, BM * 2))
+        self.assertEqual(manual[2]["Bis"], _hm(10, BM * 3))
 
     def test_segments_with_whitespace_trimmed(self):
         """Pipe-separated segments should have whitespace trimmed."""

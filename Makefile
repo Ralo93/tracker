@@ -61,19 +61,13 @@ app: build
 		echo "🔏 Signed with persistent certificate '$(CERT_NAME)'"; \
 	else \
 		codesign --force --sign - --identifier "$(BUNDLE_ID)" "$(APP_BUNDLE)"; \
-		echo "⚠️  Signed ad-hoc (permissions will reset each build). Run 'make setup-cert' to fix."; \
 	fi
 	@touch "$(APP_BUNDLE)"
 	@/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -f "$(APP_BUNDLE)"
 	@killall Dock 2>/dev/null || true
 	@echo "✅ Built $(APP_BUNDLE)"
-	@echo "🔄 Resetting TCC permissions..."
 	@tccutil reset Accessibility $(BUNDLE_ID) 2>/dev/null || true
 	@tccutil reset ScreenCapture $(BUNDLE_ID) 2>/dev/null || true
-	@echo "⚠️  Re-grant permissions in System Settings → Privacy & Security:"
-	@echo "   1. Accessibility → enable WorkLogger"
-	@echo "   2. Screen Recording → enable WorkLogger"
-	@echo "   Then quit & relaunch the app."
 	@echo "🚀 Launching WorkLogger..."
 	@open "$(APP_BUNDLE)"
 

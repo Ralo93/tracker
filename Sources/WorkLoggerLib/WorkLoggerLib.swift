@@ -1203,6 +1203,22 @@ public class ExportController: NSObject {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: python3)
         process.arguments = [scriptPath, String(year), String(week), "--xlsx", "--out", outURL.path]
+        // Ensure the bundled venv's site-packages are found even if Python
+        // resolves to a different system interpreter on the user's machine.
+        if let resourcePath = Bundle.main.resourcePath {
+            let venvDir = "\(resourcePath)/venv"
+            let sitePackages = "\(venvDir)/lib"
+            // Glob for python3.X directory inside lib/
+            let fm = FileManager.default
+            if let versions = try? fm.contentsOfDirectory(atPath: sitePackages),
+               let pyDir = versions.first(where: { $0.hasPrefix("python") }) {
+                let fullSitePackages = "\(sitePackages)/\(pyDir)/site-packages"
+                var env = ProcessInfo.processInfo.environment
+                env["VIRTUAL_ENV"] = venvDir
+                env["PYTHONPATH"] = fullSitePackages
+                process.environment = env
+            }
+        }
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError  = pipe
