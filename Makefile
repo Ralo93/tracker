@@ -5,13 +5,22 @@ BUILD_DIR = .build/release
 APP_BUNDLE = $(DESKTOP)/$(APP_NAME).app
 BINARY = $(BUILD_DIR)/$(APP_NAME)
 CERT_NAME = WorkLogger Dev
+VENV = .build/venv
+VENV_PYTHON = $(VENV)/bin/python3
 
-.PHONY: build app install clean setup-cert test reset-permissions
+.PHONY: build app install clean setup-cert test reset-permissions venv
+
+## Create build-time virtualenv with all Python dependencies
+venv: $(VENV_PYTHON)
+$(VENV_PYTHON):
+	python3 -m venv $(VENV)
+	$(VENV_PYTHON) -m pip install --upgrade pip --quiet
+	$(VENV_PYTHON) -m pip install openpyxl pytest --quiet
 
 ## Run compliance tests
-test:
+test: venv
 	swift test
-	python3 -m pytest test_report/test_report.py -v
+	$(VENV_PYTHON) -m pytest test_report/test_report.py -v
 
 ## Build release binary (tests must pass first)
 build: test
@@ -25,6 +34,10 @@ app: build
 	cp "$(BINARY)" "$(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)"
 	cp config.json "$(APP_BUNDLE)/Contents/Resources/config.json"
 	cp test_report/report.py "$(APP_BUNDLE)/Contents/Resources/report.py"
+	@echo "🐍 Creating bundled Python environment..."
+	python3 -m venv "$(APP_BUNDLE)/Contents/Resources/venv"
+	"$(APP_BUNDLE)/Contents/Resources/venv/bin/python3" -m pip install --upgrade pip --quiet
+	"$(APP_BUNDLE)/Contents/Resources/venv/bin/python3" -m pip install openpyxl --quiet
 	@echo "🎨 Generating icon..."
 	@swift Scripts/generate-icon.swift
 	@cp /tmp/WorkLogger.icns "$(APP_BUNDLE)/Contents/Resources/AppIcon.icns"
@@ -61,6 +74,8 @@ app: build
 	@echo "   1. Accessibility → enable WorkLogger"
 	@echo "   2. Screen Recording → enable WorkLogger"
 	@echo "   Then quit & relaunch the app."
+	@echo "🚀 Launching WorkLogger..."
+	@open "$(APP_BUNDLE)"
 
 ## Install binary to /usr/local/bin for terminal use
 install: build
@@ -69,6 +84,7 @@ install: build
 
 clean:
 	swift package clean
+	rm -rf $(VENV)
 
 ## Create a persistent self-signed certificate for stable code signing
 setup-cert:

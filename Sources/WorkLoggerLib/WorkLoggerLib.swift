@@ -1231,6 +1231,11 @@ public class ExportController: NSObject {
     }
 
     private func findPython3() -> String? {
+        // Prefer the bundled venv inside the app bundle
+        if let resourcePath = Bundle.main.resourcePath {
+            let bundled = "\(resourcePath)/venv/bin/python3"
+            if FileManager.default.isExecutableFile(atPath: bundled) { return bundled }
+        }
         let home = NSHomeDirectory()
         let candidates = [
             "\(home)/.pyenv/versions/3.10.13/bin/python3",
@@ -1429,7 +1434,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
 
         let quickLogItem = NSMenuItem(
-            title: "⚡ Quick Log Entry…",
+            title: "⚡ Quick Log Entry",
             action: #selector(openQuickLog),
             keyEquivalent: "l"
         )
@@ -1438,29 +1443,29 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
-            title: "Export Report…",
+            title: "Export Report",
             action: #selector(exportReport),
             keyEquivalent: "e"
         ))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
-            title: "Preferences…",
+            title: "Preferences",
             action: #selector(openPreferences),
             keyEquivalent: ","
         ))
         menu.addItem(NSMenuItem(
-            title: "About WorkLogger Data…",
+            title: "About WorkLogger Data",
             action: #selector(showDataInfo),
             keyEquivalent: ""
         ))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
-            title: "Export All My Data…",
+            title: "Export All My Data",
             action: #selector(exportAllData),
             keyEquivalent: ""
         ))
         menu.addItem(NSMenuItem(
-            title: "Delete All My Data…",
+            title: "Delete All My Data",
             action: #selector(deleteAllData),
             keyEquivalent: ""
         ))
