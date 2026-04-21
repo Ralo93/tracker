@@ -66,16 +66,22 @@ SKIP_SAFARI_EXACT    = _BUILTIN_SAFARI_EXACT | set(_rep.get("skipSafariExact", [
 SKIP_SAFARI_CONTAINS = _BUILTIN_SAFARI_CONTAINS | set(_rep.get("skipSafariContains", []))
 SHOW_SAFARI_TIME = _cfg.get("showSafariTimeInReport", False)
 
-# Prefilled meeting slots per weekday: list of (start_time, end_time) as strings "HH:MM"
+# Planned meeting slots per weekday: list of (start_time, end_time, description)
 _raw_prefilled = _rep.get("prefilledSlots", {})
-PREFILLED_SLOTS: dict[str, list[tuple[str, str]]] = {}
+PREFILLED_SLOTS: dict[str, list[tuple[str, str, str]]] = {}
 for _dow, _ranges in _raw_prefilled.items():
     if _dow == "comment":
         continue
     parsed = []
     for _r in _ranges:
-        _s, _e = _r.split("-")
-        parsed.append((_s.strip(), _e.strip()))
+        if isinstance(_r, dict):
+            _time = _r.get("time", "")
+            _desc = _r.get("description", "")
+        else:
+            _time = _r
+            _desc = ""
+        _s, _e = _time.split("-")
+        parsed.append((_s.strip(), _e.strip(), _desc))
     PREFILLED_SLOTS[_dow] = parsed
 
 BREAK_START = {"system_sleep", "screen_lock", "idle_start"}
@@ -454,16 +460,17 @@ def _fmt(sec: float) -> str:
 WEEKDAYS_DE = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"]
 WEEKDAYS_EN = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
 
-def _prefilled_blocks(date: datetime) -> list[tuple[datetime, datetime]]:
-    """Return prefilled meeting windows for a given date as datetime pairs."""
+def _prefilled_blocks(date: datetime) -> list[tuple[datetime, datetime, str]]:
+    """Return planned meeting windows for a given date as (start, end, description)."""
     dow_en = WEEKDAYS_EN[date.weekday()]
     blocks = []
-    for start_str, end_str in PREFILLED_SLOTS.get(dow_en, []):
+    for start_str, end_str, desc in PREFILLED_SLOTS.get(dow_en, []):
         sh, sm = map(int, start_str.split(":"))
         eh, em = map(int, end_str.split(":"))
         blocks.append((
             date.replace(hour=sh, minute=sm, second=0, microsecond=0),
             date.replace(hour=eh, minute=em, second=0, microsecond=0),
+            desc,
         ))
     return blocks
 
@@ -493,14 +500,14 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
     for date_str in sorted(active_dates):
         date = datetime.strptime(date_str, "%Y-%m-%d")
         dow_de = WEEKDAYS_DE[date.weekday()]
-        for ps, pe in _prefilled_blocks(date):
+        for ps, pe, desc in _prefilled_blocks(date):
             occupied.append((ps, pe))
             rows.append({
                 "Wochentag":    dow_de,
                 "Datum":        date.strftime("%d.%m.%Y"),
                 "Von":          ps.strftime("%H:%M"),
                 "Bis":          pe.strftime("%H:%M"),
-                "Beschreibung": "Meeting (prefilled)",
+                "Beschreibung": desc if desc else "Meeting",
                 "_priority":    0,
                 "_start":       ps,
             })
@@ -526,7 +533,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
 
     for entry in sorted(manual_entries, key=lambda e: e["start"]):
         date     = datetime.strptime(entry["date"], "%Y-%m-%d")
-        prefilled = _prefilled_blocks(date)
+        prefilled = [(s, e) for s, e, _ in _prefilled_blocks(date)]
         start, end = entry["start"], entry["end"]
 
         # Snap to block grid
@@ -584,7 +591,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
 
     for agg in aggs:
         date      = datetime.strptime(agg["date"], "%Y-%m-%d")
-        prefilled = _prefilled_blocks(date)
+        prefilled = [(s, e) for s, e, _ in _prefilled_blocks(date)]
         start     = round_down(agg["t0"], BLOCK_MINUTES)
         end       = round_up(agg["t1"],   BLOCK_MINUTES)
 

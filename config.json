@@ -18,12 +18,29 @@
                             "windows.cloud.microsoft", "Sign in to your account",
                             "Windows App"],
     "prefilledSlots": {
-      "comment": "These are recurring meetings already in the Excel. Work slots that overlap them will be pushed to the nearest free time.",
+      "comment": "Planned meetings. Each entry has a time range and description that appears in the report.",
       "Monday":    [],
-      "Tuesday":   ["09:00-09:15", "09:15-10:00"],
-      "Wednesday": ["09:00-09:15", "09:30-09:45", "13:30-14:00", "15:00-16:00"],
-      "Thursday":  ["09:00-09:15", "09:30-09:45"],
-      "Friday":    ["09:00-09:15", "09:30-09:45"]
+      "Tuesday":   [
+        {"time": "09:00-10:00", "description": "KI@BMF Dev Weekly"},
+        {"time": "11:30-12:00", "description": "KI@BMF JF Status ITZBund"}
+      ],
+      "Wednesday": [
+        {"time": "09:00-09:15", "description": "KI@BMF App Team Daily"},
+        {"time": "09:30-10:00", "description": "KI@BMF Dev Daily"},
+        {"time": "13:30-14:00", "description": "KI@BMF Weekly App Integration"},
+        {"time": "14:00-15:00", "description": "Area Apps Weekly"},
+        {"time": "15:00-16:00", "description": "KI@BMF JF Entwicklung & Demos"}
+      ],
+      "Thursday":  [
+        {"time": "09:00-09:15", "description": "KI@BMF App Team Daily"},
+        {"time": "10:00-10:30", "description": "KI@BMF Dev Daily"},
+        {"time": "13:00-14:00", "description": "Weekly SWE-Team"},
+        {"time": "16:00-16:30", "description": "KI@BMF Weekly Checkout"}
+      ],
+      "Friday":    [
+        {"time": "09:00-09:15", "description": "KI@BMF App Team Daily"},
+        {"time": "10:00-10:30", "description": "KI@BMF Dev Daily"}
+      ]
     }
   }
 }

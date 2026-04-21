@@ -91,7 +91,7 @@ public struct Config: Codable {
 /// using raw JSON so all other keys (gapMinutes, skipApps, …) are preserved exactly.
 public struct ReportPrefs {
     var repositories: [String]
-    var prefilledSlots: [String: [String]]   // weekday name → ["HH:MM-HH:MM"]
+    var prefilledSlots: [String: [[String: String]]]   // weekday name → [{"time": "HH:MM-HH:MM", "description": "…"}]
     var blockMinutes: Int
     var skipApps: [String]
     var skipSafariExact: [String]
@@ -107,10 +107,19 @@ public struct ReportPrefs {
                               blockMinutes: 15, skipApps: [], skipSafariExact: [], skipSafariContains: [])
         }
         let repos = report["repositories"] as? [String] ?? []
-        var slots: [String: [String]] = [:]
+        var slots: [String: [[String: String]]] = [:]
         if let raw = report["prefilledSlots"] as? [String: Any] {
             for (key, value) in raw where key != "comment" {
-                if let arr = value as? [String] { slots[key] = arr }
+                if let arr = value as? [[String: Any]] {
+                    slots[key] = arr.map { dict in
+                        var entry: [String: String] = [:]
+                        for (k, v) in dict { entry[k] = v as? String ?? "" }
+                        return entry
+                    }
+                } else if let arr = value as? [String] {
+                    // Backward compat: plain strings → dict with empty description
+                    slots[key] = arr.map { ["time": $0, "description": ""] }
+                }
             }
         }
         let blockMin = report["blockMinutes"] as? Int ?? 15
@@ -132,7 +141,9 @@ public struct ReportPrefs {
         report["repositories"] = repositories
         var rawSlots = report["prefilledSlots"] as? [String: Any] ?? [:]
         let comment = rawSlots["comment"]
-        for (day, ranges) in prefilledSlots { rawSlots[day] = ranges }
+        for (day, entries) in prefilledSlots {
+            rawSlots[day] = entries.map { ["time": $0["time"] ?? "", "description": $0["description"] ?? ""] }
+        }
         if let comment = comment { rawSlots["comment"] = comment }
         report["prefilledSlots"] = rawSlots
         report["blockMinutes"] = blockMinutes
@@ -534,10 +545,34 @@ public class IdleMonitor {
     }
 }
 
+// MARK: - EditableCell
+
+private class EditableCell: NSTextField {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if flags.isEmpty && event.keyCode == 36 && currentEditor() != nil {
+            // Return key while editing: end editing, don't propagate to Save button
+            window?.makeFirstResponder(nil)
+            return true
+        }
+        if flags == .command, let ch = event.charactersIgnoringModifiers {
+            switch ch {
+            case "c": return NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: self)
+            case "v": return NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: self)
+            case "x": return NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: self)
+            case "a": return NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: self)
+            default: break
+            }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
 // MARK: - PreferencesWindowController
 
 public class PreferencesWindowController: NSObject, NSWindowDelegate,
-                                   NSTableViewDataSource, NSTableViewDelegate {
+                                   NSTableViewDataSource, NSTableViewDelegate,
+                                   NSTextFieldDelegate, NSComboBoxDelegate {
     private var window: NSWindow?
     private var tabView: NSTabView!
 
@@ -557,9 +592,18 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
     // Slots tab
     private var slotsTable: NSTableView!
     private var dayPopup: NSPopUpButton!
-    private var slotsByDay: [String: [String]] = [:]
+    private var slotsByDay: [String: [[String: String]]] = [:]
     private let weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     private var selectedDay: String { weekdays[dayPopup?.indexOfSelectedItem ?? 0] }
+    private let timeOptions: [String] = {
+        var opts: [String] = []
+        for h in 7...20 {
+            for m in stride(from: 0, to: 60, by: 15) {
+                opts.append(String(format: "%02d:%02d", h, m))
+            }
+        }
+        return opts
+    }()
 
     // Advanced tab
     private var defaultDurationField: NSTextField!
@@ -569,18 +613,21 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
     private var skipSafariExactView: NSTextView!
     private var skipSafariContainsView: NSTextView!
 
-    var onSave: ((_ logDir: String, _ repos: [String], _ slots: [String: [String]],
+    var onSave: ((_ logDir: String, _ repos: [String], _ slots: [String: [[String: String]]],
                   _ defaultDuration: Int, _ blockMinutes: Int, _ idleThreshold: Int,
                   _ skipApps: [String], _ skipSafariExact: [String], _ skipSafariContains: [String],
                   _ retentionDays: Int, _ safariTrackingEnabled: Bool, _ logSafariURLs: Bool, _ logSafariDomainOnly: Bool, _ showSafariTime: Bool) -> Void)?
 
-    func show(logDir: String, repos: [String], slots: [String: [String]],
+    func show(logDir: String, repos: [String], slots: [String: [[String: String]]],
               defaultDuration: Int, blockMinutes: Int, idleThreshold: Int,
               skipApps: [String], skipSafariExact: [String], skipSafariContains: [String],
               retentionDays: Int, safariTrackingEnabled: Bool, logSafariURLs: Bool, logSafariDomainOnly: Bool, showSafariTime: Bool) {
         self.logDir = logDir
         self.repos = repos
         self.slotsByDay = slots
+        for day in slotsByDay.keys {
+            slotsByDay[day]?.sort { ($0["time"] ?? "") < ($1["time"] ?? "") }
+        }
         if window == nil { buildWindow() }
         logDirField.stringValue = logDir
         retentionDaysField.stringValue = "\(retentionDays)"
@@ -624,7 +671,7 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
         tabView.addTabViewItem(reposItem)
 
         let slotsItem = NSTabViewItem(identifier: "slots")
-        slotsItem.label = "Prefilled Slots"
+        slotsItem.label = "Planned Meetings"
         slotsItem.view = buildSlotsView()
         tabView.addTabViewItem(slotsItem)
 
@@ -760,30 +807,33 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
         let view = NSView()
 
         let dayLabel = NSTextField(labelWithString: "Day:")
-        dayLabel.frame = NSRect(x: 12, y: 310, width: 32, height: 18)
+        dayLabel.frame = NSRect(x: 12, y: 304, width: 32, height: 18)
         view.addSubview(dayLabel)
 
-        dayPopup = NSPopUpButton(frame: NSRect(x: 48, y: 306, width: 150, height: 26))
+        dayPopup = NSPopUpButton(frame: NSRect(x: 48, y: 300, width: 150, height: 26))
         weekdays.forEach { dayPopup.addItem(withTitle: $0) }
         dayPopup.target = self
         dayPopup.action = #selector(dayChanged)
         view.addSubview(dayPopup)
-
-        let hint = NSTextField(labelWithString: "Format: HH:MM-HH:MM  (e.g. 09:00-09:30)")
-        hint.frame = NSRect(x: 212, y: 310, width: 280, height: 18)
-        hint.textColor = .secondaryLabelColor
-        hint.font = .systemFont(ofSize: 11)
-        view.addSubview(hint)
 
         let sv = NSScrollView(frame: NSRect(x: 12, y: 50, width: 480, height: 252))
         sv.hasVerticalScroller = true
         sv.borderType = .bezelBorder
 
         slotsTable = NSTableView()
-        let col = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("slot"))
-        col.width = 460
-        slotsTable.addTableColumn(col)
-        slotsTable.headerView = nil
+        let fromCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("from"))
+        fromCol.title = "From"
+        fromCol.width = 90
+        slotsTable.addTableColumn(fromCol)
+        let toCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("to"))
+        toCol.title = "To"
+        toCol.width = 90
+        slotsTable.addTableColumn(toCol)
+        let descCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("description"))
+        descCol.title = "Description"
+        descCol.width = 276
+        slotsTable.addTableColumn(descCol)
+        slotsTable.rowHeight = 24
         slotsTable.dataSource = self
         slotsTable.delegate = self
         sv.documentView = slotsTable
@@ -826,19 +876,8 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
     @objc private func dayChanged() { slotsTable.reloadData() }
 
     @objc private func addSlot() {
-        let alert = NSAlert()
-        alert.messageText = "Add Time Slot for \(selectedDay)"
-        alert.informativeText = "Enter a time range:"
-        alert.addButton(withTitle: "Add")
-        alert.addButton(withTitle: "Cancel")
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
-        field.placeholderString = "09:00-09:30"
-        alert.accessoryView = field
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        let value = field.stringValue.trimmingCharacters(in: .whitespaces)
-        guard !value.isEmpty else { return }
-        slotsByDay[selectedDay, default: []].append(value)
-        slotsByDay[selectedDay]?.sort()
+        slotsByDay[selectedDay, default: []].append(["time": "09:00-10:00", "description": ""])
+        slotsByDay[selectedDay]?.sort { ($0["time"] ?? "") < ($1["time"] ?? "") }
         slotsTable.reloadData()
     }
 
@@ -923,6 +962,8 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
     }
 
     @objc private func saveClicked() {
+        // Flush any in-progress cell edits before reading values
+        window?.makeFirstResponder(nil)
         logDir = logDirField.stringValue.trimmingCharacters(in: .whitespaces)
         let defaultDur = Int(defaultDurationField.stringValue) ?? 60
         let blockMin = Int(blockMinutesField.stringValue) ?? 15
@@ -938,6 +979,9 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
         let safariURLs = logSafariURLsCheck.state == .on
         let domainOnly = domainOnlyCheck.state == .on
         let safariTime = safariTimeCheck.state == .on
+        for day in slotsByDay.keys {
+            slotsByDay[day]?.sort { ($0["time"] ?? "") < ($1["time"] ?? "") }
+        }
         onSave?(logDir, repos, slotsByDay, defaultDur, blockMin, idleThresh, skipA, skipSE, skipSC, retDays, safariTracking, safariURLs, domainOnly, safariTime)
         window?.orderOut(nil)
     }
@@ -958,13 +1002,83 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
     }
 
     public func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        let text = tableView === reposTable
-            ? repos[row]
-            : (slotsByDay[selectedDay]?[row] ?? "")
-        let cell = NSTextField(labelWithString: text)
+        if tableView === reposTable {
+            let cell = NSTextField(labelWithString: repos[row])
+            cell.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+            cell.lineBreakMode = .byTruncatingMiddle
+            return cell
+        }
+        let entry = slotsByDay[selectedDay]?[row] ?? [:]
+        let colID = tableColumn?.identifier.rawValue ?? ""
+        if colID == "from" || colID == "to" {
+            let parts = (entry["time"] ?? "09:00-10:00").split(separator: "-")
+            let current = colID == "from" ? String(parts.first ?? "09:00") : String(parts.last ?? "10:00")
+            let combo = NSComboBox(frame: .zero)
+            combo.isEditable = false
+            combo.isBordered = false
+            combo.numberOfVisibleItems = 10
+            combo.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+            combo.addItems(withObjectValues: timeOptions)
+            combo.stringValue = current
+            // Encode row and column: tag = row * 10 + (0 for from, 1 for to)
+            combo.tag = row * 10 + (colID == "from" ? 0 : 1)
+            combo.delegate = self
+            return combo
+        }
+        // Description column – editable text, vertically centered via wrapper
+        let wrapper = NSView()
+        let cell = EditableCell(string: entry["description"] ?? "")
         cell.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        cell.isEditable = true
+        cell.isBordered = false
+        cell.drawsBackground = false
         cell.lineBreakMode = .byTruncatingMiddle
-        return cell
+        cell.usesSingleLineMode = true
+        cell.cell?.isScrollable = true
+        cell.cell?.wraps = false
+        cell.delegate = self
+        cell.target = self
+        cell.action = #selector(slotCellDidEndEditing(_:))
+        cell.translatesAutoresizingMaskIntoConstraints = false
+        wrapper.addSubview(cell)
+        NSLayoutConstraint.activate([
+            cell.leadingAnchor.constraint(equalTo: wrapper.leadingAnchor, constant: 2),
+            cell.trailingAnchor.constraint(equalTo: wrapper.trailingAnchor, constant: -2),
+            cell.centerYAnchor.constraint(equalTo: wrapper.centerYAnchor),
+            cell.heightAnchor.constraint(equalToConstant: 20),
+        ])
+        return wrapper
+    }
+
+    public func comboBoxSelectionDidChange(_ notification: Notification) {
+        guard let combo = notification.object as? NSComboBox else { return }
+        let row = combo.tag / 10
+        let isFrom = (combo.tag % 10) == 0
+        guard row >= 0, row < (slotsByDay[selectedDay]?.count ?? 0) else { return }
+        // Selection index is set but stringValue isn't updated yet; read from items
+        let idx = combo.indexOfSelectedItem
+        guard idx >= 0, idx < combo.numberOfItems else { return }
+        let selected = combo.itemObjectValue(at: idx) as? String ?? combo.stringValue
+        let parts = (slotsByDay[selectedDay]?[row]["time"] ?? "09:00-10:00").split(separator: "-")
+        var from = String(parts.first ?? "09:00")
+        var to = String(parts.last ?? "10:00")
+        if isFrom { from = selected } else { to = selected }
+        slotsByDay[selectedDay]?[row]["time"] = "\(from)-\(to)"
+        slotsByDay[selectedDay]?.sort { ($0["time"] ?? "") < ($1["time"] ?? "") }
+        slotsTable.reloadData()
+    }
+
+    @objc private func slotCellDidEndEditing(_ sender: NSTextField) {
+        // Consumes the Return key so it doesn't trigger the Save button
+        window?.makeFirstResponder(slotsTable)
+    }
+
+    public func controlTextDidEndEditing(_ obj: Notification) {
+        guard let field = obj.object as? NSTextField, !(field is NSComboBox) else { return }
+        var row = slotsTable.row(for: field)
+        if row < 0, let wrapper = field.superview { row = slotsTable.row(for: wrapper) }
+        guard row >= 0, row < (slotsByDay[selectedDay]?.count ?? 0) else { return }
+        slotsByDay[selectedDay]?[row]["description"] = field.stringValue.trimmingCharacters(in: .whitespaces)
     }
 }
 
