@@ -654,7 +654,7 @@ public class PreferencesWindowController: NSObject, NSWindowDelegate,
             backing: .buffered,
             defer: false
         )
-        win.title = "WorkLogger Preferences"
+        win.title = "WorkLogger Settings"
         win.center()
         win.delegate = self
 
@@ -1579,7 +1579,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         ))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
-            title: "Preferences",
+            title: "Settings",
             action: #selector(openPreferences),
             keyEquivalent: ","
         ))
@@ -1803,7 +1803,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         No data is sent to any external server. \
         Logs are automatically deleted after \(config.retentionDays ?? 90) days.
 
-        You can change these settings or disable Safari tracking at any time in Preferences → Advanced.
+        You can change these settings or disable Safari tracking at any time in Settings → Advanced.
 
         Do you agree to start logging?
         """

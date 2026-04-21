@@ -27,7 +27,7 @@ from pathlib import Path
 
 def _find_config() -> Path:
     candidates = [
-        # User config written by the app's Preferences (highest priority)
+        # User config written by the app's Settings (highest priority)
         Path.home() / "Library/Application Support/WorkLogger/config.json",
         # Repo root (dev workflow)
         Path(__file__).parent.parent / "config.json",

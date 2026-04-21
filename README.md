@@ -18,7 +18,7 @@ make app
 
 Once the build succeeds `WorkLogger.app` is installed to `/Applications` and launches automatically.
 Grant every permission it requests (Accessibility, Screen Recording, Safari Automation) — you may need to enter your password.
-After that the app shows up in the menu bar. Right-click the **WL** icon → **Preferences** → **Planned Meetings** tab to enter your recurring weekly meetings — these appear as fixed rows in the generated report.
+After that the app shows up in the menu bar. Right-click the **WL** icon → **Settings** → **Planned Meetings** tab to enter your recurring weekly meetings — these appear as fixed rows in the generated report.
 
 ## Features
 
@@ -31,31 +31,28 @@ After that the app shows up in the menu bar. Right-click the **WL** icon → **P
 - Prefilled meeting slots (immovable tier-0 rows)
 - Configurable noise filters, block grid, retention, and Safari privacy controls
 - 113 automated tests gate every build
-- Configurable via Preferences GUI (4 tabs)
+- Configurable via Settings GUI (4 tabs)
 
-## Shortcuts
+## Global Shortcut
 
 | Shortcut | Action |
 |----------|--------|
 | `Cmd+Shift+L` | Quick manual log entry (from any app) |
-| `Cmd+E` | Export weekly report (.xlsx) |
-| `Cmd+,` | Preferences |
-| `Cmd+Q` | Quit |
 
 ### Menu Bar
 
 <img src="assets/menu.png" width="491" alt="Menu">
 
+### Settings
+
+<p>
+  <img src="assets/preferences.png" width="49%" alt="Settings">
+  <img src="assets/meetings.png" width="49%" alt="Planned Meetings">
+</p>
+
 ### Quick Log (`Cmd+Shift+L`)
 
 <img src="assets/quicklog.png" width="589" alt="Quick Log">
-
-### Preferences (`Cmd+,`)
-
-<p>
-  <img src="assets/preferences.png" width="49%" alt="Preferences">
-  <img src="assets/meetings.png" width="49%" alt="Planned Meetings">
-</p>
 
 ## Example Logs
 

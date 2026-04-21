@@ -117,7 +117,7 @@ As the data subject, you have the following rights under GDPR:
 
 ## 9. Privacy Controls
 
-The following settings in `config.json` (or Preferences → Advanced) control data collection:
+The following settings in `config.json` (or Settings → Advanced) control data collection:
 
 | Setting | Default | Effect |
 |---------|---------|--------|
