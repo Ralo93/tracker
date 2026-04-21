@@ -18,7 +18,7 @@ make app
 
 Once the build succeeds `WorkLogger.app` is installed to `/Applications` and launches automatically.
 Grant every permission it requests (Accessibility, Screen Recording, Safari Automation) — you may need to enter your password.
-After that the app shows up in the menu bar where you can open Preferences or try exporting a report after a while.
+After that the app shows up in the menu bar. Right-click the **WL** icon → **Preferences** → **Planned Meetings** tab to enter your recurring weekly meetings — these appear as fixed rows in the generated report.
 
 ## Features
 
@@ -52,7 +52,10 @@ After that the app shows up in the menu bar where you can open Preferences or tr
 
 ### Preferences (`Cmd+,`)
 
-<img src="assets/preferences.png" width="624" alt="Preferences">
+<p>
+  <img src="assets/preferences.png" width="49%" alt="Preferences">
+  <img src="assets/meetings.png" width="49%" alt="Planned Meetings">
+</p>
 
 ## Example Logs
 
