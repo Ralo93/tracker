@@ -19,9 +19,8 @@ $(VENV_PYTHON):
 
 ## Run compliance tests
 test: venv
-	swift test
+	SDKROOT=$(shell xcrun --show-sdk-path) swift test -Xcxx -I$(shell xcrun --show-sdk-path)/usr/include/c++/v1
 	$(VENV_PYTHON) -m pytest test_report/test_report.py -v
-
 ## Build release binary (tests must pass first)
 build: test
 	swift build -c release
