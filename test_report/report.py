@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-WorkLogger weekly report generator.
+WorkLogger weekly report generator — budget-fill pipeline.
 
 Pipeline:
   1. Load all JSONL events for the week
   2. Split into work slots (idle/sleep/lock/gap boundaries)
   3. Aggregate app + project time per slot
-  4. Fetch ALL git commits for each calendar day (full day, not just WorkLogger window)
-  5. Attach commits to slots by timestamp proximity
-  6. Output CSV rows: Weekday | Date | Start | End | Description
+  4. Fetch ALL git commits for each calendar day
+  5. Harvest deduplicated work packages from aggregated data
+  6. Budget-fill: place immovable items, then pack work packages into free time
 
 Usage:
   python3 test_report/report.py              # current ISO week
@@ -47,6 +47,10 @@ REPOS            = [Path(p) for p in _rep.get("repositories", [])]
 GAP_MINUTES      = _rep.get("gapMinutes",      10)
 MIN_SLOT_MINUTES = _rep.get("minSlotMinutes",    5)
 BLOCK_MINUTES    = _rep.get("blockMinutes",     30)
+DAY_HOURS        = _rep.get("dayHours",          8)
+LUNCH_MINUTES    = _rep.get("lunchMinutes",     60)
+LUNCH_START      = _rep.get("lunchStart",   "12:00")
+MIN_PACKAGE_MIN  = _rep.get("minPackageMinutes", 15)
 SKIP_APPS        = {
     "Code", "Finder", "loginwindow", "universalAccessAuthWarn",
     "UserNotificationCenter", "WorkLogger", "Terminal",
@@ -318,33 +322,26 @@ def all_commits_for_dates(dates: list[str]) -> list[dict]:
     commits.sort(key=lambda c: c["ts"])
     return commits
 
-# ── Attach commits to slots ───────────────────────────────────────────────────
+# ── Attach commits to aggs ────────────────────────────────────────────────────
 
 def attach_commits(aggs: list[dict], all_commits: list[dict]) -> None:
-    """Add 'commits' key to each agg. Unmatched commits go to nearest slot."""
+    """Attach commits to aggregated slots for package harvesting."""
     for agg in aggs:
         agg["commits"] = []
-
-    # also carry over manual entries to matched slots
-    for agg in aggs:
         agg.setdefault("manual_entries", [])
 
     for commit in all_commits:
         ct = commit["ts"]
-        # find slot whose window contains the commit timestamp
-        matched = next(
-            (a for a in aggs if a["t0"] <= ct <= a["t1"]),
-            None
-        )
+        date_str = ct.strftime("%Y-%m-%d")
+        matched = next((a for a in aggs if a["date"] == date_str and a["t0"] <= ct <= a["t1"]), None)
         if matched is None:
-            # assign to closest slot by midpoint distance
-            matched = min(
-                aggs,
-                key=lambda a: abs(((a["t0"] + (a["t1"] - a["t0"]) / 2) - ct).total_seconds())
-            )
-        matched["commits"].append(commit)
+            same_day = [a for a in aggs if a["date"] == date_str]
+            if same_day:
+                matched = min(same_day, key=lambda a: abs(((a["t0"] + (a["t1"] - a["t0"]) / 2) - ct).total_seconds()))
+        if matched:
+            matched["commits"].append(commit)
 
-# ── Round to block grid ───────────────────────────────────────────────────────
+# ── Round to grid ─────────────────────────────────────────────────────────────
 
 def round_down(dt: datetime, minutes: int) -> datetime:
     return dt - timedelta(minutes=dt.minute % minutes, seconds=dt.second, microseconds=dt.microsecond)
@@ -353,109 +350,11 @@ def round_up(dt: datetime, minutes: int) -> datetime:
     excess = timedelta(minutes=dt.minute % minutes, seconds=dt.second, microseconds=dt.microsecond)
     return (dt - excess + timedelta(minutes=minutes)) if excess else dt
 
-# ── Description builder ───────────────────────────────────────────────────────
-
-def build_description(agg: dict) -> str:
-    """Build a grouped, bullet-pointed description for an xlsx cell.
-
-    Groups:
-      • Manual entries
-      • Meetings
-      • Commits (grouped by repo)
-      • VS Code projects
-      • Apps
-      • Web / Safari
-    Each group gets a header line; items within are bulleted with "• ".
-    Groups are separated by newlines for readability in wrapped Excel cells.
-    """
-    B = "• "                       # bullet prefix
-    groups: list[str] = []         # each element = one group block
-
-    # ── 0. Manual entries ─────────────────────────────────────────────────
-    manual_lines = [f"{B}{m['description']}" for m in agg.get("manual_entries", [])]
-    if manual_lines:
-        groups.append("Manual:\n" + "\n".join(manual_lines))
-
-    # ── 1. Meetings ──────────────────────────────────────────────────────
-    meeting_lines: list[str] = []
-    for w in agg["teams"]:
-        if "Kompakte Besprechungsansicht" not in w:
-            continue
-        segments = [s.strip() for s in w.split("|")]
-        meaningful = [s for s in segments if s and s not in
-                      ("Microsoft Teams", "Calendar", "Kompakte Besprechungsansicht",
-                       "Chat", "Calendar | Calendar")]
-        if not meaningful:
-            continue
-        label = f"{B}{meaningful[0]}"
-        if label not in meeting_lines:
-            meeting_lines.append(label)
-    if meeting_lines:
-        groups.append("Meetings:\n" + "\n".join(meeting_lines))
-
-    # ── 2. Commits (grouped by repo) ────────────────────────────────────
-    commits_by_repo: dict[str, list[str]] = {}
-    for c in agg.get("commits", []):
-        commits_by_repo.setdefault(c["repo"], []).append(c["msg"])
-    if commits_by_repo:
-        commit_lines = [f"{B}[{repo}] {', '.join(msgs)}" for repo, msgs in commits_by_repo.items()]
-        groups.append("Commits:\n" + "\n".join(commit_lines))
-
-    # ── 3. VS Code projects ─────────────────────────────────────────────
-    proj_lines = [
-        f"{B}{proj} ({_fmt(sec)})"
-        for proj, sec in agg["proj_sec"].items()
-        if sec >= 300 and proj not in ("Save As", "unknown")
-    ]
-    if proj_lines:
-        groups.append("VS Code:\n" + "\n".join(proj_lines))
-
-    # ── 4. Apps ──────────────────────────────────────────────────────────
-    app_lines = [
-        f"{B}{app} ({_fmt(sec)})"
-        for app, sec in agg["app_sec"].items()
-        if app not in SKIP_APPS and sec >= 300
-    ]
-    if app_lines:
-        groups.append("Apps:\n" + "\n".join(app_lines))
-
-    # ── 5. Safari / Web ─────────────────────────────────────────────────
-    if SHOW_SAFARI_TIME:
-        safari_time = agg.get("safari_sec", {})
-        safari_with_time = [
-            (tab, safari_time.get(tab, 0))
-            for tab in agg["safari"]
-            if tab
-            and tab not in SKIP_SAFARI_EXACT
-            and not any(s in tab for s in SKIP_SAFARI_CONTAINS)
-        ]
-        safari_with_time.sort(key=lambda x: -x[1])
-        web_lines: list[str] = []
-        for tab, sec in safari_with_time[:5]:
-            if sec >= 30:
-                web_lines.append(f"{B}{tab} ({_fmt(sec)})")
-            else:
-                web_lines.append(f"{B}{tab}")
-        if web_lines:
-            groups.append("Web:\n" + "\n".join(web_lines))
-    else:
-        safari_filtered = [
-            t for t in agg["safari"]
-            if t
-            and t not in SKIP_SAFARI_EXACT
-            and not any(s in t for s in SKIP_SAFARI_CONTAINS)
-        ]
-        if safari_filtered:
-            web_lines = [f"{B}{t}" for t in safari_filtered[:5]]
-            groups.append("Web:\n" + "\n".join(web_lines))
-
-    return "\n\n".join(groups) if groups else "—"
-
 def _fmt(sec: float) -> str:
     m = int(sec / 60)
     return f"{m//60}h{m%60:02d}m" if m >= 60 else f"{m}min"
 
-# ── Report rows ───────────────────────────────────────────────────────────────
+# ── Work package harvesting ───────────────────────────────────────────────────
 
 WEEKDAYS_DE = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"]
 WEEKDAYS_EN = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
@@ -475,166 +374,353 @@ def _prefilled_blocks(date: datetime) -> list[tuple[datetime, datetime, str]]:
     return blocks
 
 
-def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
+def _extract_meeting_name(title: str) -> str | None:
+    """Extract meaningful name from a Teams call window title."""
+    if "Kompakte Besprechungsansicht" not in title:
+        return None
+    segments = [s.strip() for s in title.split("|")]
+    meaningful = [s for s in segments if s and s not in
+                  ("Microsoft Teams", "Calendar", "Kompakte Besprechungsansicht",
+                   "Chat", "Calendar | Calendar")]
+    return meaningful[0] if meaningful else None
+
+
+def harvest_packages(aggs: list[dict], manual_entries: list[dict]) -> dict[str, list[dict]]:
+    """Extract deduplicated work packages per date from all sources.
+
+    Returns: {date_str: [package, ...]} where each package is:
+      {"type": str, "description": str, "weight": float (seconds),
+       "source_t0": datetime, "source_t1": datetime}
     """
-    Three-tier placement:
-      Tier 0 (immovable): prefilled meeting slots from config
-      Tier 1 (high prio): manual_entries — placed at user-requested time,
-                          bumped past meetings if needed, never overlapping tier-0
-      Tier 2 (fill):      auto-detected activity slots — fill remaining space
+    packages: dict[str, list[dict]] = defaultdict(list)
+
+    for agg in aggs:
+        date_str = agg["date"]
+
+        # Track which project time is "claimed" by commits
+        claimed_projects: set[str] = set()
+
+        # ── Teams calls (detected via window titles) ─────────────────────
+        call_names_seen: set[str] = set()
+        for title in agg.get("teams", []):
+            name = _extract_meeting_name(title)
+            if name and name not in call_names_seen:
+                call_names_seen.add(name)
+                # Estimate call duration from Teams app time, divided by call count
+                teams_calls = [t for t in agg["teams"] if _extract_meeting_name(t)]
+                per_call = agg["app_sec"].get("Microsoft Teams", 0) / max(1, len(teams_calls))
+                weight = max(per_call, 15 * 60)  # at least 15 min
+                packages[date_str].append({
+                    "type": "call",
+                    "description": f"Call: {name}",
+                    "weight": weight,
+                    "source_t0": agg["t0"],
+                    "source_t1": agg["t1"],
+                })
+
+        # ── Git commits (grouped by repo) ────────────────────────────────
+        commits_by_repo: dict[str, list[str]] = {}
+        for c in agg.get("commits", []):
+            commits_by_repo.setdefault(c["repo"], []).append(c["msg"])
+        for repo, msgs in commits_by_repo.items():
+            proj_time = agg["proj_sec"].get(repo, 0)
+            weight = max(proj_time, len(msgs) * 5 * 60)  # at least 5min per commit
+            claimed_projects.add(repo)
+            commit_desc = ", ".join(msgs)
+            packages[date_str].append({
+                "type": "project",
+                "description": f"[{repo}] {commit_desc}",
+                "weight": weight,
+                "source_t0": agg["t0"],
+                "source_t1": agg["t1"],
+            })
+
+        # ── VS Code projects (not already claimed by commits) ────────────
+        for proj, sec in agg["proj_sec"].items():
+            if proj in claimed_projects:
+                continue
+            if sec < 60 or proj in ("Save As", "unknown"):
+                continue
+            packages[date_str].append({
+                "type": "project",
+                "description": proj,
+                "weight": sec,
+                "source_t0": agg["t0"],
+                "source_t1": agg["t1"],
+            })
+
+        # ── Apps (non-noise, non-code, non-teams) ────────────────────────
+        for app, sec in agg["app_sec"].items():
+            if app in SKIP_APPS or sec < 120:
+                continue
+            packages[date_str].append({
+                "type": "app",
+                "description": app,
+                "weight": sec,
+                "source_t0": agg["t0"],
+                "source_t1": agg["t1"],
+            })
+
+        # ── Safari / Web research ────────────────────────────────────────
+        web_tabs = []
+        for tab in agg.get("safari", []):
+            if not tab or tab in SKIP_SAFARI_EXACT:
+                continue
+            if any(s in tab for s in SKIP_SAFARI_CONTAINS):
+                continue
+            web_tabs.append(tab)
+        if web_tabs:
+            total_safari = sum(
+                sec for tab, sec in agg.get("safari_sec", {}).items()
+                if tab in web_tabs
+            )
+            if total_safari < 60:
+                total_safari = 60
+            desc_tabs = web_tabs[:5]
+            packages[date_str].append({
+                "type": "web_research",
+                "description": "Web: " + ", ".join(desc_tabs),
+                "weight": total_safari,
+                "source_t0": agg["t0"],
+                "source_t1": agg["t1"],
+            })
+
+    # ── Manual entries ───────────────────────────────────────────────────
+    for entry in manual_entries:
+        packages[entry["date"]].append({
+            "type": "manual",
+            "description": entry["description"],
+            "weight": entry["dur_min"] * 60,
+            "source_t0": entry["start"],
+            "source_t1": entry["end"],
+        })
+
+    # ── Deduplicate within each day ──────────────────────────────────────
+    for date_str in packages:
+        packages[date_str] = _dedup_packages(packages[date_str])
+
+    return dict(packages)
+
+
+def _dedup_packages(pkgs: list[dict]) -> list[dict]:
+    """Merge packages with identical descriptions, summing weights."""
+    seen: dict[str, dict] = {}
+    for pkg in pkgs:
+        key = pkg["description"]
+        if key in seen:
+            existing = seen[key]
+            existing["weight"] += pkg["weight"]
+            existing["source_t0"] = min(existing["source_t0"], pkg["source_t0"])
+            existing["source_t1"] = max(existing["source_t1"], pkg["source_t1"])
+        else:
+            seen[key] = dict(pkg)
+    return sorted(seen.values(), key=lambda p: p["source_t0"])
+
+
+# ── Budget-fill row placement ────────────────────────────────────────────────
+
+def _parse_hm(s: str) -> tuple[int, int]:
+    h, m = map(int, s.split(":"))
+    return h, m
+
+
+def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
+              packages_by_date: dict[str, list[dict]] | None = None) -> list[dict]:
+    """
+    Budget-fill algorithm:
+      1. Place immovable items (planned meetings, lunch)
+      2. Place detected Teams calls at their real time
+      3. Proportionally fill remaining free time with work packages
+    Each package appears exactly once — no duplication.
     """
     rows: list[dict] = []
 
-    # Collect all occupied windows: prefilled meetings + placed manual entries
-    # so auto-slots can avoid them
-    occupied: list[tuple[datetime, datetime]] = []
-
-    # ── Tier 0: emit prefilled meeting slots as filled rows ──────────────────
-    # Gather all active dates from aggs + manual entries
+    # Gather all active dates
     active_dates: set[str] = set()
     for agg in aggs:
         active_dates.add(agg["date"])
     for entry in manual_entries:
         active_dates.add(entry["date"])
+    if packages_by_date:
+        active_dates |= set(packages_by_date.keys())
 
     for date_str in sorted(active_dates):
         date = datetime.strptime(date_str, "%Y-%m-%d")
         dow_de = WEEKDAYS_DE[date.weekday()]
+
+        # ── Determine work day boundaries from actual events ─────────────
+        day_aggs = [a for a in aggs if a["date"] == date_str]
+        day_manuals = [e for e in manual_entries if e["date"] == date_str]
+
+        timestamps = ([a["t0"] for a in day_aggs] + [a["t1"] for a in day_aggs] +
+                      [e["start"] for e in day_manuals])
+        if not timestamps:
+            continue
+
+        day_start = round_down(min(timestamps), MIN_PACKAGE_MIN)
+        available_min = DAY_HOURS * 60
+        lh, lm = _parse_hm(LUNCH_START)
+        lunch_s = date.replace(hour=lh, minute=lm, second=0, microsecond=0)
+        lunch_e = lunch_s + timedelta(minutes=LUNCH_MINUTES)
+        day_end = day_start + timedelta(minutes=available_min + LUNCH_MINUTES)
+
+        # ── Reserved windows (immovable) ─────────────────────────────────
+        reserved: list[tuple[datetime, datetime, str]] = []
+
+        # Planned meetings
         for ps, pe, desc in _prefilled_blocks(date):
-            occupied.append((ps, pe))
+            reserved.append((ps, pe, desc if desc else "Meeting"))
+
+        # Lunch break
+        reserved.append((lunch_s, lunch_e, "Mittagspause"))
+
+        # Sort reserved by start time
+        reserved.sort(key=lambda x: x[0])
+
+        # Emit reserved rows (skip lunch — it's just a gap)
+        for rs, re, rdesc in reserved:
+            if rdesc == "Mittagspause":
+                continue
             rows.append({
                 "Wochentag":    dow_de,
                 "Datum":        date.strftime("%d.%m.%Y"),
-                "Von":          ps.strftime("%H:%M"),
-                "Bis":          pe.strftime("%H:%M"),
-                "Beschreibung": desc if desc else "Meeting",
-                "_priority":    0,
-                "_start":       ps,
+                "Von":          rs.strftime("%H:%M"),
+                "Bis":          re.strftime("%H:%M"),
+                "Beschreibung": rdesc,
+                "_start":       rs,
             })
 
-    def overlaps_any(start: datetime, end: datetime,
-                     blocks: list[tuple[datetime, datetime]]) -> bool:
-        return any(start < be and end > bs for bs, be in blocks)
+        reserved_windows = [(s, e) for s, e, _ in reserved]
 
-    def push_past(start: datetime, end: datetime,
-                  blocks: list[tuple[datetime, datetime]]) -> tuple[datetime, datetime]:
-        duration = end - start
-        for _ in range(len(blocks) + 1):
-            moved = False
-            for bs, be in blocks:
-                if start < be and end > bs:
-                    start = be
-                    end   = start + duration
-                    moved = True
-                    break
-            if not moved:
-                break
-        return start, end
+        # ── Compute free windows ─────────────────────────────────────────
+        free_windows = _compute_free_windows(day_start, day_end, reserved_windows)
 
-    for entry in sorted(manual_entries, key=lambda e: e["start"]):
-        date     = datetime.strptime(entry["date"], "%Y-%m-%d")
-        prefilled = [(s, e) for s, e, _ in _prefilled_blocks(date)]
-        start, end = entry["start"], entry["end"]
-
-        # Snap to block grid
-        start = round_down(start, BLOCK_MINUTES)
-        end   = start + timedelta(minutes=round(entry["dur_min"] / BLOCK_MINUTES) * BLOCK_MINUTES
-                                   or BLOCK_MINUTES)
-
-        # Push past any prefilled meetings
-        if overlaps_any(start, end, prefilled):
-            start, end = push_past(start, end, prefilled)
-
-        occupied.append((start, end))
-        dow_de = WEEKDAYS_DE[date.weekday()]
-
-        # Smart split: distribute description topics across blocks
-        total_blocks = max(1, int((end - start).total_seconds() / 60) // BLOCK_MINUTES)
-        desc = entry["description"]
-        # Parse pipe-separated segments from the manual description
-        segments = [s.strip() for s in desc.split("|") if s.strip()]
-
-        if total_blocks <= 1 or len(segments) <= 1:
-            # Single block or no segments to distribute — emit as-is
-            rows.append({
-                "Wochentag":    dow_de,
-                "Datum":        date.strftime("%d.%m.%Y"),
-                "Von":          start.strftime("%H:%M"),
-                "Bis":          end.strftime("%H:%M"),
-                "Beschreibung": f"Manual:\n• {desc}",
-                "_priority":    1,
-                "_start":       start,
-            })
-        else:
-            # Distribute segments across blocks round-robin
-            block_segments: list[list[str]] = [[] for _ in range(total_blocks)]
-            for i, seg in enumerate(segments):
-                block_segments[i % total_blocks].append(seg)
-
-            for b in range(total_blocks):
-                b_start = start + timedelta(minutes=b * BLOCK_MINUTES)
-                b_end   = b_start + timedelta(minutes=BLOCK_MINUTES)
-                block_desc = " | ".join(block_segments[b]) if block_segments[b] else "—"
-                rows.append({
-                    "Wochentag":    dow_de,
-                    "Datum":        date.strftime("%d.%m.%Y"),
-                    "Von":          b_start.strftime("%H:%M"),
-                    "Bis":          b_end.strftime("%H:%M"),
-                    "Beschreibung": block_desc,
-                    "_priority":    1,
-                    "_start":       b_start,
-                })
-
-    # ── Tier 2: place auto-detected slots ────────────────────────────────────────────────
-    # Auto-slots stay at their real event times; if they overlap a protected window
-    # (prefilled meeting or manual entry), they get clipped — never pushed forward.
-
-    for agg in aggs:
-        date      = datetime.strptime(agg["date"], "%Y-%m-%d")
-        prefilled = [(s, e) for s, e, _ in _prefilled_blocks(date)]
-        start     = round_down(agg["t0"], BLOCK_MINUTES)
-        end       = round_up(agg["t1"],   BLOCK_MINUTES)
-
-        desc = build_description(agg)
-
-        # Build protected windows: prefilled meetings + placed manual entries
-        protected = sorted(
-            prefilled + [(s, e) for s, e in occupied if s.date() == date.date()],
-            key=lambda b: b[0]
+        total_free_min = sum(
+            (fe - fs).total_seconds() / 60 for fs, fe in free_windows
         )
 
-        # Clip/split: keep only the parts of [start, end) that don't overlap any protected window
-        fragments = [(start, end)]
-        for bs, be in protected:
-            new_fragments = []
-            for fs, fe in fragments:
-                if fe <= bs or fs >= be:
-                    new_fragments.append((fs, fe))      # no overlap
-                else:
-                    if fs < bs:
-                        new_fragments.append((fs, bs))  # part before protected
-                    if fe > be:
-                        new_fragments.append((be, fe))  # part after protected
-            fragments = new_fragments
+        # ── Get work packages for this day ───────────────────────────────
+        day_pkgs = list(packages_by_date.get(date_str, [])) if packages_by_date else []
 
-        # Emit a row for each surviving fragment
-        dow_de = WEEKDAYS_DE[date.weekday()]
-        for fs, fe in fragments:
-            if fe - fs < timedelta(minutes=MIN_SLOT_MINUTES):
-                continue
-            if not desc:
-                continue
-            rows.append({
-                "Wochentag":    dow_de,
-                "Datum":        date.strftime("%d.%m.%Y"),
-                "Von":          fs.strftime("%H:%M"),
-                "Bis":          fe.strftime("%H:%M"),
-                "Beschreibung": desc,
-                "_priority":    2,
-                "_start":       fs,
-            })
+        # Separate calls (placed at real time) from fillable packages
+        call_pkgs = [p for p in day_pkgs if p["type"] == "call"]
+        fill_pkgs = [p for p in day_pkgs if p["type"] != "call"]
 
-    # Sort all rows by date + start time, then strip internal keys
+        # ── Place calls at their detected time, clipped to free windows ──
+        for pkg in call_pkgs:
+            call_dur = min(pkg["weight"] / 60, total_free_min)
+            call_dur = max(call_dur, MIN_PACKAGE_MIN)
+            # Try to place at source_t0, snapped to grid
+            call_start = round_down(pkg["source_t0"], MIN_PACKAGE_MIN)
+            call_end = call_start + timedelta(minutes=call_dur)
+
+            # Clip to free windows
+            placed = False
+            for fi, (fs, fe) in enumerate(free_windows):
+                if call_start >= fs and call_start < fe:
+                    call_end = min(call_end, fe)
+                    if (call_end - call_start).total_seconds() / 60 >= MIN_PACKAGE_MIN:
+                        rows.append({
+                            "Wochentag":    dow_de,
+                            "Datum":        date.strftime("%d.%m.%Y"),
+                            "Von":          call_start.strftime("%H:%M"),
+                            "Bis":          call_end.strftime("%H:%M"),
+                            "Beschreibung": pkg["description"],
+                            "_start":       call_start,
+                        })
+                        # Split the free window around this call
+                        free_windows.pop(fi)
+                        if call_start > fs:
+                            free_windows.insert(fi, (fs, call_start))
+                        if call_end < fe:
+                            free_windows.insert(fi + (1 if call_start > fs else 0), (call_end, fe))
+                        placed = True
+                        break
+            if not placed and free_windows:
+                # Fallback: place in first free window
+                fs, fe = free_windows[0]
+                call_end = min(fs + timedelta(minutes=call_dur), fe)
+                if (call_end - fs).total_seconds() / 60 >= MIN_PACKAGE_MIN:
+                    rows.append({
+                        "Wochentag":    dow_de,
+                        "Datum":        date.strftime("%d.%m.%Y"),
+                        "Von":          fs.strftime("%H:%M"),
+                        "Bis":          call_end.strftime("%H:%M"),
+                        "Beschreibung": pkg["description"],
+                        "_start":       fs,
+                    })
+                    if call_end < fe:
+                        free_windows[0] = (call_end, fe)
+                    else:
+                        free_windows.pop(0)
+
+        # ── Recalculate free time after calls ────────────────────────────
+        total_free_min = sum(
+            (fe - fs).total_seconds() / 60 for fs, fe in free_windows
+        )
+
+        if not fill_pkgs or total_free_min <= 0:
+            continue
+
+        # ── Allocate durations proportionally ────────────────────────────
+        total_weight = sum(p["weight"] for p in fill_pkgs)
+        if total_weight <= 0:
+            continue
+
+        allocated: list[tuple[dict, float]] = []
+        for pkg in fill_pkgs:
+            raw_min = pkg["weight"] / total_weight * total_free_min
+            alloc = max(MIN_PACKAGE_MIN, round(raw_min / MIN_PACKAGE_MIN) * MIN_PACKAGE_MIN)
+            allocated.append((pkg, alloc))
+
+        # Normalize so total allocated == total_free_min
+        total_alloc = sum(a for _, a in allocated)
+        if total_alloc != total_free_min and total_alloc > 0:
+            scale = total_free_min / total_alloc
+            allocated = [(pkg, max(MIN_PACKAGE_MIN,
+                                   round(a * scale / MIN_PACKAGE_MIN) * MIN_PACKAGE_MIN))
+                         for pkg, a in allocated]
+            # Final pass: adjust last item to absorb rounding remainder
+            total_alloc = sum(a for _, a in allocated)
+            diff = total_free_min - total_alloc
+            if diff != 0 and allocated:
+                pkg_last, a_last = allocated[-1]
+                allocated[-1] = (pkg_last, max(MIN_PACKAGE_MIN, a_last + diff))
+
+        # ── Sequentially place into free windows ─────────────────────────
+        window_idx = 0
+        cursor = free_windows[0][0] if free_windows else day_start
+
+        for pkg, alloc_min in allocated:
+            remaining = alloc_min
+            while remaining > 0 and window_idx < len(free_windows):
+                ws, we = free_windows[window_idx]
+                if cursor < ws:
+                    cursor = ws
+                avail = (we - cursor).total_seconds() / 60
+                if avail <= 0:
+                    window_idx += 1
+                    continue
+
+                use = min(remaining, avail)
+                end = cursor + timedelta(minutes=use)
+
+                if use >= MIN_PACKAGE_MIN:
+                    rows.append({
+                        "Wochentag":    dow_de,
+                        "Datum":        date.strftime("%d.%m.%Y"),
+                        "Von":          cursor.strftime("%H:%M"),
+                        "Bis":          end.strftime("%H:%M"),
+                        "Beschreibung": pkg["description"],
+                        "_start":       cursor,
+                    })
+
+                cursor = end
+                remaining -= use
+                if cursor >= we:
+                    window_idx += 1
+
+    # Sort all rows by date + start time
     rows.sort(key=lambda r: (r["Datum"], r["_start"]))
 
     # Merge consecutive rows with identical descriptions on the same date
@@ -649,21 +735,32 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = []) -> list[dict]:
             merged.append(r)
     rows = merged
 
-    # Eliminate any remaining overlaps between same-tier rows (clip end)
-    for i in range(len(rows) - 1):
-        cur, nxt = rows[i], rows[i + 1]
-        if cur["Datum"] == nxt["Datum"] and cur["Bis"] > nxt["Von"]:
-            cur["Bis"] = nxt["Von"]
-
-    # Remove zero-duration rows and internal keys
+    # Strip internal keys, drop zero-duration rows
     clean = []
     for r in rows:
-        r.pop("_priority", None)
         r.pop("_start", None)
         if r["Von"] < r["Bis"]:
             clean.append(r)
 
     return clean
+
+
+def _compute_free_windows(day_start: datetime, day_end: datetime,
+                          reserved: list[tuple[datetime, datetime]]) -> list[tuple[datetime, datetime]]:
+    """Compute free time windows between reserved blocks within [day_start, day_end]."""
+    free = [(day_start, day_end)]
+    for rs, re in sorted(reserved, key=lambda x: x[0]):
+        new_free = []
+        for fs, fe in free:
+            if fe <= rs or fs >= re:
+                new_free.append((fs, fe))
+            else:
+                if fs < rs:
+                    new_free.append((fs, rs))
+                if fe > re:
+                    new_free.append((re, fe))
+        free = new_free
+    return free
 
 # ── Output ────────────────────────────────────────────────────────────────────
 
@@ -754,11 +851,9 @@ if __name__ == "__main__":
     events = load_week(year, week)
     print(f"  {len(events)} events loaded")
 
-    # ── Tier 1: extract manual entries (highest priority) ─────────────────────
     manual_entries = extract_manual_entries(events)
     print(f"  {len(manual_entries)} manual entries")
 
-    # ── Tier 2: auto-detected slots from activity ─────────────────────────────
     slots = split_slots(events)
     print(f"  {len(slots)} raw slots")
     aggs  = [a for a in (aggregate(s) for s in slots) if a]
@@ -770,7 +865,11 @@ if __name__ == "__main__":
     if all_commits:
         attach_commits(aggs, all_commits)
 
-    rows = make_rows(aggs, manual_entries)
+    packages = harvest_packages(aggs, manual_entries)
+    total_pkgs = sum(len(v) for v in packages.values())
+    print(f"  {total_pkgs} work packages across {len(packages)} day(s)")
+
+    rows = make_rows(aggs, manual_entries, packages)
 
     print()
     print_table(rows)

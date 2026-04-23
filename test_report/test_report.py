@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests for report.py — smart aggregation, Teams filtering, block helpers.
+Tests for report.py — budget-fill pipeline, harvest, Teams filtering, helpers.
 
 Run: python3 -m pytest test_report/test_report.py -v
   or: python3 test_report/test_report.py
@@ -17,7 +17,7 @@ import report
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
-BM = report.BLOCK_MINUTES  # actual config-driven block size
+MPM = report.MIN_PACKAGE_MIN  # minimum package minutes (15)
 
 
 def _make_manual(desc: str, date_str: str, time_str: str, dur_min: int) -> dict:
@@ -36,7 +36,7 @@ def _make_manual(desc: str, date_str: str, time_str: str, dur_min: int) -> dict:
 
 
 def _make_agg(date_str: str, t0_str: str, t1_str: str, **kwargs) -> dict:
-    """Build a minimal aggregation dict for make_rows()."""
+    """Build a minimal aggregation dict."""
     date = datetime.strptime(date_str, "%Y-%m-%d")
     h0, m0 = map(int, t0_str.split(":"))
     h1, m1 = map(int, t1_str.split(":"))
@@ -57,227 +57,300 @@ def _make_agg(date_str: str, t0_str: str, t1_str: str, **kwargs) -> dict:
     return base
 
 
-# ==============================================================================
-# 1. Smart Aggregation — Multi-Block Manual Entry Distribution
-# ==============================================================================
-
-class TestSmartAggregation(unittest.TestCase):
-
-    def test_single_block_no_split(self):
-        """A manual entry that fits in one block should NOT be split."""
-        entry = _make_manual("Task A | Task B", "2026-04-13", "10:00", BM)
-        rows = report.make_rows([], [entry])
-        manual = [r for r in rows if "Manual:" in r.get("Beschreibung", "")]
-        self.assertEqual(len(manual), 1, "Single block should produce 1 row")
-        self.assertIn("Task A", manual[0]["Beschreibung"])
-        self.assertIn("Task B", manual[0]["Beschreibung"])
-
-    def test_two_blocks_two_segments(self):
-        """Two pipe-segments across two blocks → one segment per block."""
-        entry = _make_manual("Task A | Task B", "2026-04-13", "10:00", BM * 2)
-        rows = report.make_rows([], [entry])
-        manual = [r for r in rows if r.get("Beschreibung", "") not in ("", "—")]
-        self.assertEqual(len(manual), 2)
-        self.assertIn("Task A", manual[0]["Beschreibung"])
-        self.assertIn("Task B", manual[1]["Beschreibung"])
-
-    def test_six_segments_three_blocks(self):
-        """6 segments / 3 blocks → round-robin: 2 per block."""
-        desc = "A | B | C | D | E | F"
-        entry = _make_manual(desc, "2026-04-13", "10:00", BM * 3)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung", "") not in ("", "—")],
-            key=lambda r: r["Von"]
-        )
-        self.assertEqual(len(manual), 3)
-        # Block 0: A, D  |  Block 1: B, E  |  Block 2: C, F
-        self.assertIn("A", manual[0]["Beschreibung"])
-        self.assertIn("D", manual[0]["Beschreibung"])
-        self.assertIn("B", manual[1]["Beschreibung"])
-        self.assertIn("E", manual[1]["Beschreibung"])
-        self.assertIn("C", manual[2]["Beschreibung"])
-        self.assertIn("F", manual[2]["Beschreibung"])
-
-    def test_more_blocks_than_segments(self):
-        """3 blocks but only 2 segments → 2 blocks get content, 1 gets dash."""
-        entry = _make_manual("Task A | Task B", "2026-04-13", "10:00", BM * 3)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung") is not None],
-            key=lambda r: r["Von"]
-        )
-        self.assertEqual(len(manual), 3)
-        self.assertIn("Task A", manual[0]["Beschreibung"])
-        self.assertIn("Task B", manual[1]["Beschreibung"])
-        self.assertEqual(manual[2]["Beschreibung"], "—")
-
-    def test_single_segment_multi_block_no_split(self):
-        """A single topic spanning 2 blocks should NOT be split."""
-        entry = _make_manual("Just one task", "2026-04-13", "10:00", BM * 2)
-        rows = report.make_rows([], [entry])
-        manual = [r for r in rows if "Manual:" in r.get("Beschreibung", "")]
-        self.assertEqual(len(manual), 1, "Single segment → single row, no split")
-        self.assertIn("Just one task", manual[0]["Beschreibung"])
-
-    def test_block_times_are_correct(self):
-        """Verify start/end times of split blocks are contiguous."""
-        entry = _make_manual("A | B | C", "2026-04-13", "10:00", BM * 3)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung", "") not in ("", "\u2014")],
-            key=lambda r: r["Von"]
-        )
-        def _hm(base_h, total_min):
-            m = base_h * 60 + total_min
-            return f"{m // 60:02d}:{m % 60:02d}"
-        self.assertEqual(manual[0]["Von"], "10:00")
-        self.assertEqual(manual[0]["Bis"], _hm(10, BM))
-        self.assertEqual(manual[1]["Von"], _hm(10, BM))
-        self.assertEqual(manual[1]["Bis"], _hm(10, BM * 2))
-        self.assertEqual(manual[2]["Von"], _hm(10, BM * 2))
-        self.assertEqual(manual[2]["Bis"], _hm(10, BM * 3))
-
-    def test_segments_with_whitespace_trimmed(self):
-        """Pipe-separated segments should have whitespace trimmed."""
-        entry = _make_manual("  Task A  |  Task B  ", "2026-04-13", "10:00", BM * 2)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung", "") not in ("", "—")],
-            key=lambda r: r["Von"]
-        )
-        self.assertEqual(len(manual), 2)
-        self.assertEqual(manual[0]["Beschreibung"], "Task A")
-        self.assertEqual(manual[1]["Beschreibung"], "Task B")
-
-    def test_empty_pipe_segments_ignored(self):
-        """Empty segments between pipes should be filtered out."""
-        entry = _make_manual("A || B |  | C", "2026-04-13", "10:00", BM * 3)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung", "") not in ("", "—")],
-            key=lambda r: r["Von"]
-        )
-        # 3 real segments across 3 blocks
-        self.assertEqual(len(manual), 3)
-        self.assertIn("A", manual[0]["Beschreibung"])
-        self.assertIn("B", manual[1]["Beschreibung"])
-        self.assertIn("C", manual[2]["Beschreibung"])
-
-    def test_snap_to_block_grid(self):
-        """Entry at 10:17 should snap down to nearest block boundary."""
-        entry = _make_manual("A | B", "2026-04-13", "10:17", BM * 2)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung", "") not in ("", "\u2014")],
-            key=lambda r: r["Von"]
-        )
-        # Should snap down to the block boundary at or before 10:17
-        snapped = report.round_down(datetime(2026, 4, 13, 10, 17), BM)
-        self.assertEqual(manual[0]["Von"], snapped.strftime("%H:%M"))
-
-    def test_real_world_description(self):
-        """The exact kind of description the user creates via Quick Log."""
-        desc = (
-            "PR Evaluation Pipeline DÜB | Teams: Florentin Rauscher (DE) | "
-            "Teams: KI@BMF Dev | Teams: PM-Chatgruppe | Teams: Sven Metscher (DE) | "
-            "COMMIT [GPT4Gov-Doc_Translation]: deleted redundant old testfiles | "
-            "WorkLogger (57min) | GPT4Gov-Doc_Translation (23min) | "
-            "Code (1h02m) | Safari (52min) | Microsoft Teams (6min) | "
-            "Microsoft Word (5min) | Web: Confirmation request"
-        )
-        segments = [s.strip() for s in desc.split("|") if s.strip()]
-        num_blocks = len(segments)  # enough blocks to hold all segments
-        entry = _make_manual(desc, "2026-04-13", "10:00", BM * num_blocks)
-        rows = report.make_rows([], [entry])
-        manual = sorted(
-            [r for r in rows if r.get("Beschreibung", "") not in ("", "—")],
-            key=lambda r: r["Von"]
-        )
-        self.assertEqual(len(manual), num_blocks)
-        # Every block should have content, not full description repeated
-        for row in manual:
-            self.assertNotEqual(row["Beschreibung"], desc,
-                                "No block should contain the full original description")
-        # Total segments across all blocks should equal original segment count
-        all_segs = []
-        for row in manual:
-            all_segs.extend([s.strip() for s in row["Beschreibung"].split("|")])
-        self.assertEqual(len(all_segs), len(segments))
+def _make_pkg(desc: str, weight_min: float, date_str: str = "2026-04-13",
+              t0: str = "09:00", t1: str = "10:00", ptype: str = "project") -> dict:
+    """Build a work package dict."""
+    date = datetime.strptime(date_str, "%Y-%m-%d")
+    h0, m0 = map(int, t0.split(":"))
+    h1, m1 = map(int, t1.split(":"))
+    return {
+        "type": ptype,
+        "description": desc,
+        "weight": weight_min * 60,
+        "source_t0": date.replace(hour=h0, minute=m0),
+        "source_t1": date.replace(hour=h1, minute=m1),
+    }
 
 
 # ==============================================================================
-# 2. Teams Filtering — Only Calls/Meetings
+# 1. harvest_packages — Work Package Extraction
+# ==============================================================================
+
+class TestHarvestPackages(unittest.TestCase):
+
+    def test_project_harvested(self):
+        """VS Code project time → project package."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00",
+                        proj_sec={"MyProject": 1800})
+        pkgs = report.harvest_packages([agg], [])
+        self.assertIn("2026-04-13", pkgs)
+        descs = [p["description"] for p in pkgs["2026-04-13"]]
+        self.assertIn("MyProject", descs)
+
+    def test_commit_claims_project(self):
+        """Commits for a repo should absorb its project time — no separate project pkg."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00",
+                        proj_sec={"MyApp": 3600},
+                        commits=[{"repo": "MyApp", "msg": "fix bug", "sha": "abc", "ts": datetime(2026, 4, 13, 9, 30)}])
+        pkgs = report.harvest_packages([agg], [])
+        descs = [p["description"] for p in pkgs["2026-04-13"]]
+        # Should have "[MyApp] fix bug" but NOT a separate "MyApp"
+        self.assertTrue(any("[MyApp]" in d for d in descs))
+        self.assertNotIn("MyApp", descs)
+
+    def test_manual_entry_becomes_package(self):
+        """Manual entries → manual package with stated duration as weight."""
+        manual = _make_manual("Sprint Planning", "2026-04-13", "14:00", 30)
+        pkgs = report.harvest_packages([], [manual])
+        self.assertIn("2026-04-13", pkgs)
+        pkg = pkgs["2026-04-13"][0]
+        self.assertEqual(pkg["description"], "Sprint Planning")
+        self.assertEqual(pkg["weight"], 30 * 60)
+
+    def test_teams_call_harvested(self):
+        """Teams call window → call package."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00",
+                        teams=["Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"],
+                        app_sec={"Microsoft Teams": 1800})
+        pkgs = report.harvest_packages([agg], [])
+        descs = [p["description"] for p in pkgs["2026-04-13"]]
+        self.assertIn("Call: Florentin Rauscher", descs)
+
+    def test_teams_chat_not_harvested(self):
+        """Teams chat windows should not create packages."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00",
+                        teams=["KI@BMF Dev | Chat | Microsoft Teams"])
+        pkgs = report.harvest_packages([agg], [])
+        # No packages or no call packages
+        day_pkgs = pkgs.get("2026-04-13", [])
+        call_pkgs = [p for p in day_pkgs if p["type"] == "call"]
+        self.assertEqual(len(call_pkgs), 0)
+
+    def test_dedup_same_project_across_slots(self):
+        """Same project in multiple slots → merged into one package."""
+        agg1 = _make_agg("2026-04-13", "09:00", "10:00", proj_sec={"MyProject": 1800})
+        agg2 = _make_agg("2026-04-13", "14:00", "15:00", proj_sec={"MyProject": 900})
+        pkgs = report.harvest_packages([agg1, agg2], [])
+        proj_pkgs = [p for p in pkgs["2026-04-13"] if p["description"] == "MyProject"]
+        self.assertEqual(len(proj_pkgs), 1, "Same project should be deduped")
+        self.assertEqual(proj_pkgs[0]["weight"], 1800 + 900)
+
+    def test_small_project_filtered(self):
+        """Projects < 60s should be filtered out."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00", proj_sec={"Tiny": 30})
+        pkgs = report.harvest_packages([agg], [])
+        day_pkgs = pkgs.get("2026-04-13", [])
+        descs = [p["description"] for p in day_pkgs]
+        self.assertNotIn("Tiny", descs)
+
+    def test_safari_web_research(self):
+        """Non-noise Safari tabs → single web_research package."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00",
+                        safari=["GitHub PR", "StackOverflow"],
+                        safari_sec={"GitHub PR": 300, "StackOverflow": 200})
+        pkgs = report.harvest_packages([agg], [])
+        web_pkgs = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "web_research"]
+        self.assertEqual(len(web_pkgs), 1)
+        self.assertIn("GitHub PR", web_pkgs[0]["description"])
+
+    def test_noise_safari_filtered(self):
+        """Safari noise tabs should not produce packages."""
+        agg = _make_agg("2026-04-13", "09:00", "10:00",
+                        safari=["Start Page", "favorites://"],
+                        safari_sec={"Start Page": 600})
+        pkgs = report.harvest_packages([agg], [])
+        web_pkgs = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "web_research"]
+        self.assertEqual(len(web_pkgs), 0)
+
+    def test_empty_input(self):
+        """No aggs, no manual → empty packages."""
+        pkgs = report.harvest_packages([], [])
+        self.assertEqual(len(pkgs), 0)
+
+
+# ==============================================================================
+# 2. make_rows — Budget Fill Algorithm
+# ==============================================================================
+
+class TestBudgetFill(unittest.TestCase):
+
+    def test_single_package_fills_day(self):
+        """One package should expand to fill available time."""
+        agg = _make_agg("2026-04-13", "09:00", "17:00")  # Sunday, no meetings
+        pkgs = {"2026-04-13": [_make_pkg("MyProject", 60)]}
+        rows = report.make_rows([agg], [], pkgs)
+        proj_rows = [r for r in rows if r["Beschreibung"] == "MyProject"]
+        self.assertGreaterEqual(len(proj_rows), 1)
+        # Should fill substantial time, not just 60min
+        total = sum(
+            (datetime.strptime(r["Bis"], "%H:%M") - datetime.strptime(r["Von"], "%H:%M")).total_seconds() / 60
+            for r in proj_rows
+        )
+        self.assertGreater(total, 60, "Single package should expand to fill available time")
+
+    def test_no_duplicate_descriptions(self):
+        """Each package should not have its description randomly duplicated.
+        Splitting across lunch is acceptable (same desc, non-adjacent rows)."""
+        agg = _make_agg("2026-04-13", "09:00", "17:00")
+        pkgs = {"2026-04-13": [
+            _make_pkg("ProjectA", 120, t0="09:00", t1="11:00"),
+            _make_pkg("ProjectB", 60, t0="11:00", t1="12:00"),
+            _make_pkg("ProjectC", 60, t0="14:00", t1="15:00"),
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        descs = [r["Beschreibung"] for r in rows]
+        # All three packages should be present
+        for desc in ["ProjectA", "ProjectB", "ProjectC"]:
+            self.assertIn(desc, descs, f"{desc} missing from output")
+        # No description should appear more than twice (at most a lunch split)
+        for desc in set(descs):
+            self.assertLessEqual(descs.count(desc), 2,
+                                 f"{desc} duplicated too many times: {descs.count(desc)}")
+
+    def test_manual_entry_gets_stated_duration(self):
+        """Manual entry weight (30min) should be reflected proportionally."""
+        agg = _make_agg("2026-04-13", "09:00", "17:00")
+        manual = _make_manual("Quick task", "2026-04-13", "10:00", 30)
+        pkgs = report.harvest_packages([agg], [manual])
+        rows = report.make_rows([agg], [manual], pkgs)
+        manual_rows = [r for r in rows if r["Beschreibung"] == "Quick task"]
+        self.assertGreaterEqual(len(manual_rows), 1)
+        total = sum(
+            (datetime.strptime(r["Bis"], "%H:%M") - datetime.strptime(r["Von"], "%H:%M")).total_seconds() / 60
+            for r in manual_rows
+        )
+        # Should get at least MIN_PACKAGE_MIN, not inflated to a full hour
+        self.assertGreaterEqual(total, MPM)
+
+    def test_rows_dont_overlap(self):
+        """No two rows on the same date should overlap."""
+        agg = _make_agg("2026-04-13", "08:00", "17:00")
+        pkgs = {"2026-04-13": [
+            _make_pkg("A", 120, t0="08:00", t1="10:00"),
+            _make_pkg("B", 90, t0="10:00", t1="11:30"),
+            _make_pkg("C", 60, t0="13:00", t1="14:00"),
+            _make_pkg("D", 45, t0="14:00", t1="14:45"),
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        same_date = [r for r in rows if r["Datum"] == "13.04.2026"]
+        for i in range(len(same_date) - 1):
+            self.assertLessEqual(same_date[i]["Bis"], same_date[i + 1]["Von"],
+                                 f"Overlap: {same_date[i]} vs {same_date[i+1]}")
+
+    def test_rows_are_contiguous(self):
+        """Work rows should fill continuously (no unexplained gaps outside lunch)."""
+        agg = _make_agg("2026-04-13", "09:00", "17:00")  # Sunday, no meetings
+        pkgs = {"2026-04-13": [
+            _make_pkg("A", 120),
+            _make_pkg("B", 120),
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        work_rows = [r for r in rows if r["Datum"] == "13.04.2026"]
+        for i in range(len(work_rows) - 1):
+            gap_start = work_rows[i]["Bis"]
+            gap_end = work_rows[i + 1]["Von"]
+            if gap_start != gap_end:
+                # Only allowed gap is the lunch break
+                self.assertEqual(gap_start, report.LUNCH_START,
+                                 f"Unexpected gap from {gap_start} to {gap_end}")
+
+    def test_planned_meetings_immovable(self):
+        """Prefilled meetings should appear at their exact configured times."""
+        # Use a Wednesday which has meetings in the test config
+        agg = _make_agg("2026-04-15", "08:00", "17:00")  # Wednesday
+        pkgs = {"2026-04-15": [_make_pkg("Work", 300, date_str="2026-04-15")]}
+        rows = report.make_rows([agg], [], pkgs)
+        # Check that work rows don't overlap meeting times
+        work_rows = [r for r in rows if r["Beschreibung"] == "Work"]
+        meeting_rows = [r for r in rows if r["Beschreibung"] != "Work"]
+        for mr in meeting_rows:
+            for wr in work_rows:
+                # No overlap
+                self.assertTrue(
+                    wr["Bis"] <= mr["Von"] or wr["Von"] >= mr["Bis"],
+                    f"Work row {wr['Von']}-{wr['Bis']} overlaps meeting {mr['Von']}-{mr['Bis']}"
+                )
+
+    def test_proportional_allocation(self):
+        """Two packages with 2:1 weight ratio → ~2:1 time ratio."""
+        agg = _make_agg("2026-04-13", "09:00", "17:00")  # Sunday, no meetings
+        pkgs = {"2026-04-13": [
+            _make_pkg("Heavy", 240),  # 4h of evidence
+            _make_pkg("Light", 120),  # 2h of evidence
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        def _total_min(desc):
+            return sum(
+                (datetime.strptime(r["Bis"], "%H:%M") - datetime.strptime(r["Von"], "%H:%M")).total_seconds() / 60
+                for r in rows if r["Beschreibung"] == desc
+            )
+        heavy = _total_min("Heavy")
+        light = _total_min("Light")
+        self.assertGreater(heavy, 0)
+        self.assertGreater(light, 0)
+        ratio = heavy / light
+        # Should be roughly 2:1, allow tolerance for rounding to MIN_PACKAGE_MIN grid
+        self.assertGreater(ratio, 1.3, f"Expected ~2:1 ratio, got {ratio:.1f}")
+        self.assertLess(ratio, 3.0, f"Expected ~2:1 ratio, got {ratio:.1f}")
+
+    def test_empty_packages_only_meetings(self):
+        """If no work packages, only meeting rows should appear."""
+        # Wednesday has meetings
+        agg = _make_agg("2026-04-15", "08:00", "17:00")
+        rows = report.make_rows([agg], [], {"2026-04-15": []})
+        for r in rows:
+            self.assertNotEqual(r["Beschreibung"], "—")
+
+
+# ==============================================================================
+# 3. Teams Filtering in harvest
 # ==============================================================================
 
 class TestTeamsFiltering(unittest.TestCase):
 
-    def test_meeting_included(self):
-        """Teams window with Kompakte Besprechungsansicht = actual call."""
+    def test_meeting_creates_call_package(self):
+        """Teams window with Kompakte Besprechungsansicht → call package."""
         agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[
             "Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"
-        ])
-        desc = report.build_description(agg)
-        self.assertIn("Meetings:", desc)
-        self.assertIn("• Florentin Rauscher", desc)
+        ], app_sec={"Microsoft Teams": 1800})
+        pkgs = report.harvest_packages([agg], [])
+        calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["description"], "Call: Florentin Rauscher")
 
-    def test_chat_excluded(self):
-        """Teams window that is just a chat should NOT appear individually."""
+    def test_chat_no_package(self):
+        """Teams chat → no call package."""
         agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[
             "KI@BMF Dev | Chat | Microsoft Teams"
         ])
-        desc = report.build_description(agg)
-        self.assertNotIn("Teams: KI@BMF Dev", desc)
-        self.assertNotIn("KI@BMF Dev", desc)
-
-    def test_channel_excluded(self):
-        """Teams channel window should NOT appear individually."""
-        agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[
-            "PM-Chatgruppe | Microsoft Teams"
-        ])
-        desc = report.build_description(agg)
-        self.assertNotIn("Teams: PM-Chatgruppe", desc)
-        self.assertNotIn("PM-Chatgruppe", desc)
+        pkgs = report.harvest_packages([agg], [])
+        calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
+        self.assertEqual(len(calls), 0)
 
     def test_mixed_chat_and_meeting(self):
-        """Only the meeting should appear, not the chat."""
+        """Only the meeting creates a call package."""
         agg = _make_agg("2026-04-13", "09:00", "10:00", teams=[
             "KI@BMF Dev | Chat | Microsoft Teams",
             "Sven Metscher | Kompakte Besprechungsansicht | Microsoft Teams",
             "PM-Chatgruppe | Microsoft Teams",
-        ])
-        desc = report.build_description(agg)
-        self.assertIn("• Sven Metscher", desc)
-        self.assertNotIn("KI@BMF Dev", desc)
-        self.assertNotIn("PM-Chatgruppe", desc)
+        ], app_sec={"Microsoft Teams": 3600})
+        pkgs = report.harvest_packages([agg], [])
+        calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["description"], "Call: Sven Metscher")
 
-    def test_teams_app_time_skipped(self):
-        """Teams is in SKIP_APPS, so it should NOT appear in the Apps group."""
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        teams=["Chat stuff | Microsoft Teams"],
-                        app_sec={"Microsoft Teams": 600})
-        desc = report.build_description(agg)
-        self.assertNotIn("Microsoft Teams (10min)", desc)
-
-    def test_no_teams_entries_produces_empty(self):
-        """No teams windows → no teams in description."""
-        agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[])
-        desc = report.build_description(agg)
-        self.assertNotIn("Meetings:", desc)
-        self.assertNotIn("Teams:", desc)
-
-    def test_meeting_with_only_noise_segments(self):
-        """Meeting whose segments are all noise → should be skipped."""
+    def test_noise_meeting_title_no_package(self):
+        """Meeting with only noise segments → no call package."""
         agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[
             "Microsoft Teams | Kompakte Besprechungsansicht | Calendar"
         ])
-        desc = report.build_description(agg)
-        # All meaningful segments filtered → no Meetings group at all
-        self.assertNotIn("Meetings:", desc)
+        pkgs = report.harvest_packages([agg], [])
+        calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
+        self.assertEqual(len(calls), 0)
 
 
 # ==============================================================================
-# 3. Round-to-Block Helpers
+# 4. Round-to-Block Helpers
 # ==============================================================================
 
 class TestBlockHelpers(unittest.TestCase):
@@ -312,61 +385,85 @@ class TestBlockHelpers(unittest.TestCase):
 
 
 # ==============================================================================
-# 4. build_description Edge Cases
+# 5. _compute_free_windows
 # ==============================================================================
 
-class TestBuildDescription(unittest.TestCase):
+class TestFreeWindows(unittest.TestCase):
 
-    def test_empty_agg_returns_dash(self):
-        agg = _make_agg("2026-04-13", "09:00", "09:30")
-        desc = report.build_description(agg)
-        self.assertEqual(desc, "—")
+    def test_no_reserved(self):
+        s = datetime(2026, 4, 13, 9, 0)
+        e = datetime(2026, 4, 13, 17, 0)
+        free = report._compute_free_windows(s, e, [])
+        self.assertEqual(free, [(s, e)])
 
-    def test_commits_shown(self):
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        commits=[{"repo": "MyApp", "msg": "fix bug", "sha": "abc123", "ts": datetime(2026, 4, 13, 9, 15)}])
-        desc = report.build_description(agg)
-        self.assertIn("Commits:", desc)
-        self.assertIn("• [MyApp] fix bug", desc)
+    def test_single_reserved_middle(self):
+        s = datetime(2026, 4, 13, 9, 0)
+        e = datetime(2026, 4, 13, 17, 0)
+        reserved = [(datetime(2026, 4, 13, 12, 0), datetime(2026, 4, 13, 13, 0))]
+        free = report._compute_free_windows(s, e, reserved)
+        self.assertEqual(len(free), 2)
+        self.assertEqual(free[0], (s, datetime(2026, 4, 13, 12, 0)))
+        self.assertEqual(free[1], (datetime(2026, 4, 13, 13, 0), e))
 
-    def test_vscode_projects_shown(self):
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        proj_sec={"MyProject": 900})
-        desc = report.build_description(agg)
-        self.assertIn("VS Code:", desc)
-        self.assertIn("• MyProject (15min)", desc)
+    def test_adjacent_reserved(self):
+        s = datetime(2026, 4, 13, 9, 0)
+        e = datetime(2026, 4, 13, 17, 0)
+        reserved = [
+            (datetime(2026, 4, 13, 10, 0), datetime(2026, 4, 13, 11, 0)),
+            (datetime(2026, 4, 13, 11, 0), datetime(2026, 4, 13, 12, 0)),
+        ]
+        free = report._compute_free_windows(s, e, reserved)
+        self.assertEqual(len(free), 2)
+        self.assertEqual(free[0][1], datetime(2026, 4, 13, 10, 0))
+        self.assertEqual(free[1][0], datetime(2026, 4, 13, 12, 0))
 
-    def test_vscode_projects_under_threshold_hidden(self):
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        proj_sec={"MyProject": 200})
-        desc = report.build_description(agg)
-        self.assertNotIn("MyProject", desc)
-
-    def test_safari_tabs_shown(self):
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=["GitHub Pull Request #42", "Jira Board"])
-        desc = report.build_description(agg)
-        self.assertIn("Web:", desc)
-        self.assertIn("GitHub Pull Request #42", desc)
-
-    def test_safari_max_five(self):
-        tabs = [f"Tab {i}" for i in range(10)]
-        agg = _make_agg("2026-04-13", "09:00", "10:00", safari=tabs)
-        desc = report.build_description(agg)
-        # Only first 5
-        self.assertIn("Tab 4", desc)
-        self.assertNotIn("Tab 5", desc)
-
-    def test_manual_entry_in_agg(self):
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        manual_entries=[{"description": "Quick task"}])
-        desc = report.build_description(agg)
-        self.assertIn("Manual:", desc)
-        self.assertIn("• Quick task", desc)
+    def test_reserved_at_edges(self):
+        s = datetime(2026, 4, 13, 9, 0)
+        e = datetime(2026, 4, 13, 17, 0)
+        reserved = [
+            (datetime(2026, 4, 13, 9, 0), datetime(2026, 4, 13, 10, 0)),
+            (datetime(2026, 4, 13, 16, 0), datetime(2026, 4, 13, 17, 0)),
+        ]
+        free = report._compute_free_windows(s, e, reserved)
+        self.assertEqual(len(free), 1)
+        self.assertEqual(free[0], (datetime(2026, 4, 13, 10, 0), datetime(2026, 4, 13, 16, 0)))
 
 
 # ==============================================================================
-# 5. extract_manual_entries
+# 6. _dedup_packages
+# ==============================================================================
+
+class TestDedupPackages(unittest.TestCase):
+
+    def test_no_dupes(self):
+        pkgs = [
+            _make_pkg("A", 60),
+            _make_pkg("B", 30),
+        ]
+        result = report._dedup_packages(pkgs)
+        self.assertEqual(len(result), 2)
+
+    def test_merge_same_desc(self):
+        pkgs = [
+            _make_pkg("A", 60, t0="09:00", t1="10:00"),
+            _make_pkg("A", 30, t0="14:00", t1="15:00"),
+        ]
+        result = report._dedup_packages(pkgs)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]["weight"], 90 * 60)
+
+    def test_sorted_by_source_t0(self):
+        pkgs = [
+            _make_pkg("B", 30, t0="14:00", t1="15:00"),
+            _make_pkg("A", 60, t0="09:00", t1="10:00"),
+        ]
+        result = report._dedup_packages(pkgs)
+        self.assertEqual(result[0]["description"], "A")
+        self.assertEqual(result[1]["description"], "B")
+
+
+# ==============================================================================
+# 7. extract_manual_entries
 # ==============================================================================
 
 class TestExtractManualEntries(unittest.TestCase):
@@ -425,7 +522,7 @@ class TestExtractManualEntries(unittest.TestCase):
 
 
 # ==============================================================================
-# 6. _fmt helper
+# 8. _fmt helper
 # ==============================================================================
 
 class TestFmt(unittest.TestCase):
@@ -444,79 +541,10 @@ class TestFmt(unittest.TestCase):
 
 
 # ==============================================================================
-# 7. Safari time accumulation
+# 9. Safari time accumulation in aggregate()
 # ==============================================================================
 
 class TestSafariTimeAccumulation(unittest.TestCase):
-
-    def setUp(self):
-        """Save original value and enable Safari time for these tests."""
-        self._orig = report.SHOW_SAFARI_TIME
-
-    def tearDown(self):
-        report.SHOW_SAFARI_TIME = self._orig
-
-    def test_time_shown_when_enabled(self):
-        report.SHOW_SAFARI_TIME = True
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=["Azure DevOps", "GitHub"],
-                        safari_sec={"Azure DevOps": 720, "GitHub": 300})
-        desc = report.build_description(agg)
-        self.assertIn("• Azure DevOps (12min)", desc)
-        self.assertIn("• GitHub (5min)", desc)
-
-    def test_time_hidden_when_disabled(self):
-        report.SHOW_SAFARI_TIME = False
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=["Azure DevOps", "GitHub"],
-                        safari_sec={"Azure DevOps": 720, "GitHub": 300})
-        desc = report.build_description(agg)
-        self.assertIn("Azure DevOps", desc)
-        self.assertNotIn("12min", desc)
-
-    def test_sorted_by_time_descending(self):
-        report.SHOW_SAFARI_TIME = True
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=["Low", "High", "Mid"],
-                        safari_sec={"Low": 60, "High": 900, "Mid": 300})
-        desc = report.build_description(agg)
-        # Find the Web: group
-        self.assertIn("Web:", desc)
-        self.assertIn("• High (15min)", desc)
-        # High should appear before Mid
-        high_pos = desc.index("High")
-        mid_pos = desc.index("Mid")
-        self.assertLess(high_pos, mid_pos)
-
-    def test_short_tabs_no_duration_label(self):
-        """Tabs with <30s active time should show name only, no duration."""
-        report.SHOW_SAFARI_TIME = True
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=["QuickTab"],
-                        safari_sec={"QuickTab": 15})
-        desc = report.build_description(agg)
-        self.assertIn("QuickTab", desc)
-        self.assertNotIn("0min", desc)
-
-    def test_max_five_tabs_with_time(self):
-        report.SHOW_SAFARI_TIME = True
-        tabs = [f"Tab{i}" for i in range(10)]
-        secs = {f"Tab{i}": 600 - i * 50 for i in range(10)}
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=tabs, safari_sec=secs)
-        desc = report.build_description(agg)
-        self.assertIn("Tab0", desc)
-        self.assertIn("Tab4", desc)
-        self.assertNotIn("Tab5", desc)
-
-    def test_skip_filters_still_apply(self):
-        report.SHOW_SAFARI_TIME = True
-        agg = _make_agg("2026-04-13", "09:00", "10:00",
-                        safari=["Start Page", "Real Tab"],
-                        safari_sec={"Start Page": 600, "Real Tab": 300})
-        desc = report.build_description(agg)
-        self.assertNotIn("Start Page", desc)
-        self.assertIn("Real Tab", desc)
 
     def test_aggregate_tracks_safari_sec(self):
         """Integration: aggregate() should populate safari_sec from tab events."""
@@ -544,6 +572,29 @@ class TestSafariTimeAccumulation(unittest.TestCase):
         # Tab B: 5-8min = 180s
         self.assertAlmostEqual(agg["safari_sec"]["Tab A"], 420, delta=1)
         self.assertAlmostEqual(agg["safari_sec"]["Tab B"], 180, delta=1)
+
+
+# ==============================================================================
+# 10. _extract_meeting_name
+# ==============================================================================
+
+class TestExtractMeetingName(unittest.TestCase):
+
+    def test_person_name(self):
+        title = "Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"
+        self.assertEqual(report._extract_meeting_name(title), "Florentin Rauscher")
+
+    def test_meeting_name(self):
+        title = "Sprint Planning | Kompakte Besprechungsansicht | Microsoft Teams"
+        self.assertEqual(report._extract_meeting_name(title), "Sprint Planning")
+
+    def test_no_call_indicator(self):
+        title = "Chat | Microsoft Teams"
+        self.assertIsNone(report._extract_meeting_name(title))
+
+    def test_all_noise(self):
+        title = "Microsoft Teams | Kompakte Besprechungsansicht | Calendar"
+        self.assertIsNone(report._extract_meeting_name(title))
 
 
 if __name__ == "__main__":
