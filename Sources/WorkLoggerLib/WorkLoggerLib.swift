@@ -507,6 +507,87 @@ public class VSCodeProjectMonitor {
     }
 }
 
+// MARK: - TeamsCallMonitor
+
+/// Polls Microsoft Teams windows to detect spontaneous calls.
+/// When a window title containing "Kompakte Besprechungsansicht" appears,
+/// a `teams_call_start` event is logged. When it disappears, `teams_call_end`
+/// is logged with the duration.
+public class TeamsCallMonitor {
+    private var timer: Timer?
+    private let logger: Logger
+    /// The window title of the active call, or nil when not in a call.
+    private(set) var activeCallTitle: String?
+    private var callStartTime: Date?
+
+    /// The substring that identifies a Teams call window.
+    static let callIndicator = "Kompakte Besprechungsansicht"
+
+    init(logger: Logger) {
+        self.logger = logger
+    }
+
+    func start() {
+        timer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+            self.check()
+        }
+    }
+
+    func check() {
+        let callTitle = currentCallWindowTitle()
+
+        if let title = callTitle, activeCallTitle == nil {
+            // Call just started
+            activeCallTitle = title
+            callStartTime = Date()
+            logger.log([
+                "event": "teams_call_start",
+                "detail": title
+            ])
+        } else if callTitle == nil, let prevTitle = activeCallTitle {
+            // Call just ended
+            let duration = callStartTime.map { Int(Date().timeIntervalSince($0)) } ?? 0
+            activeCallTitle = nil
+            callStartTime = nil
+            logger.log([
+                "event": "teams_call_end",
+                "detail": prevTitle,
+                "duration_seconds": duration
+            ])
+        }
+    }
+
+    /// Returns the title of the first Teams window that looks like a call, or nil.
+    private func currentCallWindowTitle() -> String? {
+        guard let windowList = CGWindowListCopyWindowInfo(
+            [.optionAll, .excludeDesktopElements], kCGNullWindowID
+        ) as? [[String: Any]] else { return nil }
+
+        return windowList
+            .filter {
+                let owner = $0[kCGWindowOwnerName as String] as? String ?? ""
+                return owner == "Microsoft Teams" || owner == "Microsoft Teams (work or school)"
+            }
+            .compactMap { $0[kCGWindowName as String] as? String }
+            .first { $0.contains(Self.callIndicator) }
+    }
+
+    /// Extract meaningful meeting name from a Teams call window title.
+    /// "Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams" → "Florentin Rauscher"
+    static func extractMeetingName(from title: String) -> String? {
+        let segments = title.components(separatedBy: " | ")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter {
+                !$0.isEmpty &&
+                $0 != "Microsoft Teams" &&
+                $0 != callIndicator &&
+                $0 != "Calendar" &&
+                $0 != "Chat"
+            }
+        return segments.first
+    }
+}
+
 // MARK: - IdleMonitor
 
 public class IdleMonitor {
@@ -1393,6 +1474,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
     var tracker: ActivityTracker!
     var safariTabMonitor: SafariTabMonitor!
     var vscodeProjectMonitor: VSCodeProjectMonitor!
+    var teamsCallMonitor: TeamsCallMonitor!
     var idleMonitor: IdleMonitor!
     var statusItem: NSStatusItem!
     let preferencesController = PreferencesWindowController()
@@ -1508,9 +1590,11 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
         tracker = ActivityTracker(logger: logger, config: config)
         safariTabMonitor = SafariTabMonitor(logger: logger, config: config)
         vscodeProjectMonitor = VSCodeProjectMonitor(logger: logger)
+        teamsCallMonitor = TeamsCallMonitor(logger: logger)
         idleMonitor = IdleMonitor(logger: logger, threshold: config.idleThresholdSeconds)
         safariTabMonitor.start()
         vscodeProjectMonitor.start()
+        teamsCallMonitor.start()
         idleMonitor.start()
         logger.log(["event": "started", "config_path": Config.configPath])
 

@@ -848,3 +848,39 @@ struct PrivacyByDefaultTests {
         }
     }
 }
+
+// MARK: - TeamsCallMonitor
+
+@Suite("TeamsCallMonitor – extractMeetingName")
+struct TeamsCallMonitorTests {
+
+    @Test func extractsPersonName() {
+        let title = "Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"
+        #expect(TeamsCallMonitor.extractMeetingName(from: title) == "Florentin Rauscher")
+    }
+
+    @Test func extractsMeetingName() {
+        let title = "Sprint Planning | Kompakte Besprechungsansicht | Microsoft Teams"
+        #expect(TeamsCallMonitor.extractMeetingName(from: title) == "Sprint Planning")
+    }
+
+    @Test func returnsNilForNonCallWindow() {
+        let title = "Chat | Microsoft Teams"
+        #expect(TeamsCallMonitor.extractMeetingName(from: title) == nil)
+    }
+
+    @Test func handlesCalendarFormat() {
+        let title = "Microsoft Teams | Kompakte Besprechungsansicht | Calendar"
+        #expect(TeamsCallMonitor.extractMeetingName(from: title) == nil)
+    }
+
+    @Test func callIndicatorPresent() {
+        let title = "Sven Metscher | Kompakte Besprechungsansicht | Microsoft Teams"
+        #expect(title.contains(TeamsCallMonitor.callIndicator))
+    }
+
+    @Test func callIndicatorAbsentInChat() {
+        let title = "Chat | Microsoft Teams"
+        #expect(!title.contains(TeamsCallMonitor.callIndicator))
+    }
+}
