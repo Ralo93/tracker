@@ -144,14 +144,28 @@ class TestHarvestPackages(unittest.TestCase):
         self.assertNotIn("Tiny", descs)
 
     def test_safari_web_research(self):
-        """Non-noise Safari tabs → single web_research package."""
+        """Non-noise Safari tabs → single web_research package when enabled."""
+        old = report.SKIP_WEB_RESEARCH
+        report.SKIP_WEB_RESEARCH = False
+        try:
+            agg = _make_agg("2026-04-13", "09:00", "10:00",
+                            safari=["GitHub PR", "StackOverflow"],
+                            safari_sec={"GitHub PR": 300, "StackOverflow": 200})
+            pkgs = report.harvest_packages([agg], [])
+            web_pkgs = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "web_research"]
+            self.assertEqual(len(web_pkgs), 1)
+            self.assertIn("GitHub PR", web_pkgs[0]["description"])
+        finally:
+            report.SKIP_WEB_RESEARCH = old
+
+    def test_safari_web_research_skipped_by_default(self):
+        """Web research packages are skipped when SKIP_WEB_RESEARCH is True."""
         agg = _make_agg("2026-04-13", "09:00", "10:00",
                         safari=["GitHub PR", "StackOverflow"],
                         safari_sec={"GitHub PR": 300, "StackOverflow": 200})
         pkgs = report.harvest_packages([agg], [])
         web_pkgs = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "web_research"]
-        self.assertEqual(len(web_pkgs), 1)
-        self.assertIn("GitHub PR", web_pkgs[0]["description"])
+        self.assertEqual(len(web_pkgs), 0)
 
     def test_noise_safari_filtered(self):
         """Safari noise tabs should not produce packages."""
@@ -232,7 +246,7 @@ class TestBudgetFill(unittest.TestCase):
             _make_pkg("D", 45, t0="14:00", t1="14:45"),
         ]}
         rows = report.make_rows([agg], [], pkgs)
-        same_date = [r for r in rows if r["Datum"] == "13.04.2026"]
+        same_date = [r for r in rows if r["Datum"] == "4/13/26"]
         for i in range(len(same_date) - 1):
             self.assertLessEqual(same_date[i]["Bis"], same_date[i + 1]["Von"],
                                  f"Overlap: {same_date[i]} vs {same_date[i+1]}")
@@ -245,7 +259,7 @@ class TestBudgetFill(unittest.TestCase):
             _make_pkg("B", 120),
         ]}
         rows = report.make_rows([agg], [], pkgs)
-        work_rows = [r for r in rows if r["Datum"] == "13.04.2026"]
+        work_rows = [r for r in rows if r["Datum"] == "4/13/26"]
         for i in range(len(work_rows) - 1):
             gap_start = work_rows[i]["Bis"]
             gap_end = work_rows[i + 1]["Von"]

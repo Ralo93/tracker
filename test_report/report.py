@@ -12,6 +12,7 @@ Pipeline:
 
 Usage:
   python3 test_report/report.py              # current ISO week
+  python3 test_report/report.py --last-week  # previous ISO week
   python3 test_report/report.py 2026 16      # specific year + week number
   python3 test_report/report.py --csv        # write report.xlsx instead of printing
 """
@@ -50,7 +51,8 @@ BLOCK_MINUTES    = _rep.get("blockMinutes",     30)
 DAY_HOURS        = _rep.get("dayHours",          8)
 LUNCH_MINUTES    = _rep.get("lunchMinutes",     60)
 LUNCH_START      = _rep.get("lunchStart",   "12:00")
-MIN_PACKAGE_MIN  = _rep.get("minPackageMinutes", 15)
+MIN_PACKAGE_MIN  = _rep.get("minPackageMinutes", 30)
+SKIP_WEB_RESEARCH = _rep.get("skipWebResearch", True)
 SKIP_APPS        = {
     "Code", "Finder", "loginwindow", "universalAccessAuthWarn",
     "UserNotificationCenter", "WorkLogger", "Terminal",
@@ -441,6 +443,8 @@ def harvest_packages(aggs: list[dict], manual_entries: list[dict]) -> dict[str, 
                 continue
             if sec < 60 or proj in ("Save As", "unknown"):
                 continue
+            if proj in SKIP_APPS:
+                continue
             packages[date_str].append({
                 "type": "project",
                 "description": proj,
@@ -462,28 +466,29 @@ def harvest_packages(aggs: list[dict], manual_entries: list[dict]) -> dict[str, 
             })
 
         # ── Safari / Web research ────────────────────────────────────────
-        web_tabs = []
-        for tab in agg.get("safari", []):
-            if not tab or tab in SKIP_SAFARI_EXACT:
-                continue
-            if any(s in tab for s in SKIP_SAFARI_CONTAINS):
-                continue
-            web_tabs.append(tab)
-        if web_tabs:
-            total_safari = sum(
-                sec for tab, sec in agg.get("safari_sec", {}).items()
-                if tab in web_tabs
-            )
-            if total_safari < 60:
-                total_safari = 60
-            desc_tabs = web_tabs[:5]
-            packages[date_str].append({
-                "type": "web_research",
-                "description": "Web: " + ", ".join(desc_tabs),
-                "weight": total_safari,
-                "source_t0": agg["t0"],
-                "source_t1": agg["t1"],
-            })
+        if not SKIP_WEB_RESEARCH:
+            web_tabs = []
+            for tab in agg.get("safari", []):
+                if not tab or tab in SKIP_SAFARI_EXACT:
+                    continue
+                if any(s in tab for s in SKIP_SAFARI_CONTAINS):
+                    continue
+                web_tabs.append(tab)
+            if web_tabs:
+                total_safari = sum(
+                    sec for tab, sec in agg.get("safari_sec", {}).items()
+                    if tab in web_tabs
+                )
+                if total_safari < 60:
+                    total_safari = 60
+                desc_tabs = web_tabs[:5]
+                packages[date_str].append({
+                    "type": "web_research",
+                    "description": "Web: " + ", ".join(desc_tabs),
+                    "weight": total_safari,
+                    "source_t0": agg["t0"],
+                    "source_t1": agg["t1"],
+                })
 
     # ── Manual entries ───────────────────────────────────────────────────
     for entry in manual_entries:
@@ -522,6 +527,19 @@ def _dedup_packages(pkgs: list[dict]) -> list[dict]:
 def _parse_hm(s: str) -> tuple[int, int]:
     h, m = map(int, s.split(":"))
     return h, m
+
+
+def _hm_diff(von: str, bis: str) -> float:
+    """Return duration in minutes between two HH:MM strings."""
+    h0, m0 = _parse_hm(von)
+    h1, m1 = _parse_hm(bis)
+    return (h1 * 60 + m1) - (h0 * 60 + m0)
+
+
+def _hm_to_dt(ref: datetime, hm: str) -> datetime:
+    """Combine a reference datetime's date with an HH:MM string."""
+    h, m = _parse_hm(hm)
+    return ref.replace(hour=h, minute=m, second=0, microsecond=0)
 
 
 def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
@@ -583,11 +601,12 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 continue
             rows.append({
                 "Wochentag":    dow_de,
-                "Datum":        date.strftime("%d.%m.%Y"),
+                "Datum":        date.strftime("%-m/%-d/%y"),
                 "Von":          rs.strftime("%H:%M"),
                 "Bis":          re.strftime("%H:%M"),
                 "Beschreibung": rdesc,
                 "_start":       rs,
+                "_reserved":    True,
             })
 
         reserved_windows = [(s, e) for s, e, _ in reserved]
@@ -609,7 +628,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
         # ── Place calls at their detected time, clipped to free windows ──
         for pkg in call_pkgs:
             call_dur = min(pkg["weight"] / 60, total_free_min)
-            call_dur = max(call_dur, MIN_PACKAGE_MIN)
+            call_dur = max(MIN_PACKAGE_MIN, round(call_dur / MIN_PACKAGE_MIN) * MIN_PACKAGE_MIN)
             # Try to place at source_t0, snapped to grid
             call_start = round_down(pkg["source_t0"], MIN_PACKAGE_MIN)
             call_end = call_start + timedelta(minutes=call_dur)
@@ -622,7 +641,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                     if (call_end - call_start).total_seconds() / 60 >= MIN_PACKAGE_MIN:
                         rows.append({
                             "Wochentag":    dow_de,
-                            "Datum":        date.strftime("%d.%m.%Y"),
+                            "Datum":        date.strftime("%-m/%-d/%y"),
                             "Von":          call_start.strftime("%H:%M"),
                             "Bis":          call_end.strftime("%H:%M"),
                             "Beschreibung": pkg["description"],
@@ -643,7 +662,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 if (call_end - fs).total_seconds() / 60 >= MIN_PACKAGE_MIN:
                     rows.append({
                         "Wochentag":    dow_de,
-                        "Datum":        date.strftime("%d.%m.%Y"),
+                        "Datum":        date.strftime("%-m/%-d/%y"),
                         "Von":          fs.strftime("%H:%M"),
                         "Bis":          call_end.strftime("%H:%M"),
                         "Beschreibung": pkg["description"],
@@ -668,24 +687,24 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
             continue
 
         allocated: list[tuple[dict, float]] = []
+        GRID = 15  # snap to 15-min grid for clean times
         for pkg in fill_pkgs:
             raw_min = pkg["weight"] / total_weight * total_free_min
-            alloc = max(MIN_PACKAGE_MIN, round(raw_min / MIN_PACKAGE_MIN) * MIN_PACKAGE_MIN)
+            alloc = max(GRID, round(raw_min / GRID) * GRID)
             allocated.append((pkg, alloc))
 
         # Normalize so total allocated == total_free_min
         total_alloc = sum(a for _, a in allocated)
         if total_alloc != total_free_min and total_alloc > 0:
             scale = total_free_min / total_alloc
-            allocated = [(pkg, max(MIN_PACKAGE_MIN,
-                                   round(a * scale / MIN_PACKAGE_MIN) * MIN_PACKAGE_MIN))
+            allocated = [(pkg, max(GRID, round(a * scale / GRID) * GRID))
                          for pkg, a in allocated]
             # Final pass: adjust last item to absorb rounding remainder
             total_alloc = sum(a for _, a in allocated)
             diff = total_free_min - total_alloc
             if diff != 0 and allocated:
                 pkg_last, a_last = allocated[-1]
-                allocated[-1] = (pkg_last, max(MIN_PACKAGE_MIN, a_last + diff))
+                allocated[-1] = (pkg_last, max(GRID, a_last + diff))
 
         # ── Sequentially place into free windows ─────────────────────────
         window_idx = 0
@@ -705,15 +724,14 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 use = min(remaining, avail)
                 end = cursor + timedelta(minutes=use)
 
-                if use >= MIN_PACKAGE_MIN:
-                    rows.append({
-                        "Wochentag":    dow_de,
-                        "Datum":        date.strftime("%d.%m.%Y"),
-                        "Von":          cursor.strftime("%H:%M"),
-                        "Bis":          end.strftime("%H:%M"),
-                        "Beschreibung": pkg["description"],
-                        "_start":       cursor,
-                    })
+                rows.append({
+                    "Wochentag":    dow_de,
+                    "Datum":        date.strftime("%-m/%-d/%y"),
+                    "Von":          cursor.strftime("%H:%M"),
+                    "Bis":          end.strftime("%H:%M"),
+                    "Beschreibung": pkg["description"],
+                    "_start":       cursor,
+                })
 
                 cursor = end
                 remaining -= use
@@ -731,6 +749,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
             and merged[-1]["Beschreibung"] == r["Beschreibung"]
             and merged[-1]["Bis"] == r["Von"]):
             merged[-1]["Bis"] = r["Bis"]
+            merged[-1]["_start"] = min(merged[-1]["_start"], r["_start"])
         else:
             merged.append(r)
     rows = merged
@@ -739,6 +758,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
     clean = []
     for r in rows:
         r.pop("_start", None)
+        r.pop("_reserved", None)
         if r["Von"] < r["Bis"]:
             clean.append(r)
 
@@ -797,8 +817,14 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
     ws = wb.active
     ws.title = "Report"
 
-    headers = ["Wochentag", "Datum", "Von", "Bis", "Beschreibung"]
-    col_widths = [14, 14, 7, 7, 80]
+    headers = ["WOCHENTAG", "DATUM", "VON", "BIS",
+               "ZEITRAUM", "PRÜFUNG", "AUFTRAG", "ARBEITSPAKET",
+               "BESCHREIBUNG"]
+    col_widths = [14, 12, 7, 7, 10, 10, 10, 14, 80]
+    # Map from header to row dict key (empty string = skip column)
+    key_map = ["Wochentag", "Datum", "Von", "Bis",
+               "", "", "", "",
+               "Beschreibung"]
 
     header_fill = PatternFill("solid", fgColor="2F5597")
     header_font = Font(bold=True, color="FFFFFF")
@@ -814,8 +840,9 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
     alt_fill = PatternFill("solid", fgColor="D9E1F2")
     for row_idx, row in enumerate(rows, start=2):
         fill = alt_fill if row_idx % 2 == 0 else None
-        for col, key in enumerate(headers, start=1):
-            cell = ws.cell(row=row_idx, column=col, value=row.get(key, ""))
+        for col, key in enumerate(key_map, start=1):
+            val = row.get(key, "") if key else ""
+            cell = ws.cell(row=row_idx, column=col, value=val)
             cell.alignment = Alignment(wrap_text=True, vertical="top")
             if fill:
                 cell.fill = fill
@@ -844,8 +871,13 @@ if __name__ == "__main__":
             break
 
     now  = datetime.now()
-    year = int(args[0]) if len(args) > 0 else now.isocalendar().year
-    week = int(args[1]) if len(args) > 1 else now.isocalendar().week
+    if "--last-week" in flags:
+        last = now - timedelta(weeks=1)
+        year = int(args[0]) if len(args) > 0 else last.isocalendar().year
+        week = int(args[1]) if len(args) > 1 else last.isocalendar().week
+    else:
+        year = int(args[0]) if len(args) > 0 else now.isocalendar().year
+        week = int(args[1]) if len(args) > 1 else now.isocalendar().week
 
     print(f"\nLoading week {week}/{year}…")
     events = load_week(year, week)
