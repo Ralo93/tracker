@@ -222,7 +222,7 @@ def build_doc():
     # ======================================================================
     add_heading(doc, "5. Privacy Controls & Settings", level=1)
     add_para(doc,
-        "All privacy settings are accessible via Preferences → General tab and are persisted in the config file. "
+        "All privacy settings are accessible via Settings → General tab and are persisted in the config file. "
         "Each setting has a tooltip explaining its exact effect.")
     add_table(doc,
         ["Setting", "Default", "Effect"],

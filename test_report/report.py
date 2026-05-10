@@ -57,6 +57,7 @@ SKIP_APPS        = {
     "Code", "Finder", "loginwindow", "universalAccessAuthWarn",
     "UserNotificationCenter", "WorkLogger", "Terminal",
     "Safari", "Microsoft Teams",
+    "IDLE", "Calendar", "Welcome", "QuickTime Player",
 } | set(_rep.get("skipApps", []))
 # Hardcoded noise that is always filtered regardless of user config
 _BUILTIN_SAFARI_EXACT = {
@@ -742,12 +743,15 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
     rows.sort(key=lambda r: (r["Datum"], r["_start"]))
 
     # Merge consecutive rows with identical descriptions on the same date
+    # but never merge reserved (prefilled) rows — they must keep exact times
     merged: list[dict] = []
     for r in rows:
         if (merged
             and merged[-1]["Datum"] == r["Datum"]
             and merged[-1]["Beschreibung"] == r["Beschreibung"]
-            and merged[-1]["Bis"] == r["Von"]):
+            and merged[-1]["Bis"] == r["Von"]
+            and not merged[-1].get("_reserved")
+            and not r.get("_reserved")):
             merged[-1]["Bis"] = r["Bis"]
             merged[-1]["_start"] = min(merged[-1]["_start"], r["_start"])
         else:
