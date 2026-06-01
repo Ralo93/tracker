@@ -13,3 +13,4 @@ __pycache__/
 WorkLogger_Compliance_Review.docx
 WorkLogger_Compliance_Review_DE.docx
 WorkLogger_Executive_Summary_DE.docx
+test_report/*.xlsx

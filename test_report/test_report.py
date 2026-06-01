@@ -20,6 +20,15 @@ import report
 MPM = report.MIN_PACKAGE_MIN  # minimum package minutes (15)
 
 
+def _total_row_minutes(rows: list[dict]) -> float:
+    """Sum total minutes across report rows."""
+    return sum(
+        (datetime.strptime(r["Bis"], "%H:%M") -
+         datetime.strptime(r["Von"], "%H:%M")).total_seconds() / 60
+        for r in rows
+    )
+
+
 def _make_manual(desc: str, date_str: str, time_str: str, dur_min: int) -> dict:
     """Build a manual entry dict matching extract_manual_entries() output."""
     date = datetime.strptime(date_str, "%Y-%m-%d")
@@ -306,6 +315,94 @@ class TestBudgetFill(unittest.TestCase):
         # Should be roughly 2:1, allow tolerance for rounding to MIN_PACKAGE_MIN grid
         self.assertGreater(ratio, 1.3, f"Expected ~2:1 ratio, got {ratio:.1f}")
         self.assertLess(ratio, 3.0, f"Expected ~2:1 ratio, got {ratio:.1f}")
+
+    def test_day_total_capped_at_day_hours(self):
+        """Total time per day must not exceed DAY_HOURS (regression: meetings outside window)."""
+        # Wednesday — events start at 09:30, AFTER the 09:00-09:15 meeting.
+        # Without the fix, that meeting falls outside [day_start, day_end],
+        # its row is emitted but not subtracted from the fill budget → >8h.
+        agg = _make_agg("2026-04-15", "09:30", "16:30")
+        pkgs = {"2026-04-15": [
+            _make_pkg("ProjectA", 180, date_str="2026-04-15", t0="09:30", t1="12:00"),
+            _make_pkg("ProjectB", 120, date_str="2026-04-15", t0="14:00", t1="16:30"),
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        total_min = sum(
+            (datetime.strptime(r["Bis"], "%H:%M") -
+             datetime.strptime(r["Von"], "%H:%M")).total_seconds() / 60
+            for r in rows
+        )
+        self.assertLessEqual(total_min, report.DAY_HOURS * 60,
+                             f"Total {total_min}min exceeds {report.DAY_HOURS}h budget")
+
+    def test_day_total_capped_tuesday(self):
+        """Tuesday: events after first meeting (09:00-10:00) — still within budget."""
+        agg = _make_agg("2026-04-14", "10:30", "16:00")
+        pkgs = {"2026-04-14": [
+            _make_pkg("Work", 240, date_str="2026-04-14", t0="10:30", t1="16:00"),
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        total = _total_row_minutes(rows)
+        self.assertLessEqual(total, report.DAY_HOURS * 60,
+                             f"Total {total}min exceeds budget")
+
+    def test_day_total_capped_heavy_meeting_day(self):
+        """Wednesday with 5 meetings, events starting between meetings."""
+        agg = _make_agg("2026-04-15", "09:20", "16:30")
+        pkgs = {"2026-04-15": [
+            _make_pkg("ProjectA", 120, date_str="2026-04-15", t0="09:20", t1="11:00"),
+            _make_pkg("ProjectB", 90, date_str="2026-04-15", t0="11:00", t1="12:30"),
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        self.assertLessEqual(_total_row_minutes(rows), report.DAY_HOURS * 60)
+
+    def test_many_small_packages_within_budget(self):
+        """20 tiny packages each rounded to GRID minimum — total still ≤ budget."""
+        agg = _make_agg("2026-04-13", "09:00", "17:00")  # Monday, no meetings
+        pkgs = {"2026-04-13": [
+            _make_pkg(f"Pkg{i}", 5, t0="09:00", t1="09:05")
+            for i in range(20)
+        ]}
+        rows = report.make_rows([agg], [], pkgs)
+        self.assertLessEqual(_total_row_minutes(rows), report.DAY_HOURS * 60)
+
+    def test_multi_day_each_within_budget(self):
+        """Each day independently capped at DAY_HOURS."""
+        aggs = [
+            _make_agg("2026-04-15", "09:30", "16:00"),  # Wednesday
+            _make_agg("2026-04-16", "10:00", "16:30"),  # Thursday
+        ]
+        pkgs = {
+            "2026-04-15": [_make_pkg("Work", 300, date_str="2026-04-15", t0="09:30", t1="16:00")],
+            "2026-04-16": [_make_pkg("Work", 300, date_str="2026-04-16", t0="10:00", t1="16:30")],
+        }
+        rows = report.make_rows(aggs, [], pkgs)
+        for datum_fmt in ("4/15/26", "4/16/26"):
+            day_rows = [r for r in rows if r["Datum"] == datum_fmt]
+            day_total = _total_row_minutes(day_rows)
+            self.assertLessEqual(day_total, report.DAY_HOURS * 60,
+                                 f"{datum_fmt}: {day_total}min exceeds budget")
+
+    def test_early_start_late_meeting_clipped(self):
+        """Events start early enough that late meeting falls outside day_end — clipped."""
+        # Thursday: events at 06:00, day_end = 15:00.
+        # Meeting 16:00-16:30 is past day_end — should not appear.
+        agg = _make_agg("2026-04-16", "06:00", "14:00")
+        pkgs = {"2026-04-16": [_make_pkg("Work", 300, date_str="2026-04-16", t0="06:00", t1="14:00")]}
+        rows = report.make_rows([agg], [], pkgs)
+        late_meeting = [r for r in rows if r["Von"] >= "16:00"]
+        self.assertEqual(len(late_meeting), 0, "Meeting past day_end should be clipped")
+        self.assertLessEqual(_total_row_minutes(rows), report.DAY_HOURS * 60)
+
+    def test_only_manual_entries_within_budget(self):
+        """Day built from manual entries only — still capped."""
+        manuals = [
+            _make_manual("Task A", "2026-04-15", "09:00", 120),  # Wednesday
+            _make_manual("Task B", "2026-04-15", "14:00", 180),
+        ]
+        pkgs = report.harvest_packages([], manuals)
+        rows = report.make_rows([], manuals, pkgs)
+        self.assertLessEqual(_total_row_minutes(rows), report.DAY_HOURS * 60)
 
     def test_empty_packages_only_meetings(self):
         """If no work packages, only meeting rows should appear."""

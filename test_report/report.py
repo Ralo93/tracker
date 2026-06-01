@@ -576,6 +576,13 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
         if not timestamps:
             continue
 
+        # Include prefilled meeting start times so the day window
+        # encompasses all planned meetings and their time is properly
+        # budgeted (prevents total > DAY_HOURS).
+        prefilled = _prefilled_blocks(date)
+        for ps, pe, _ in prefilled:
+            timestamps.append(ps)
+
         day_start = round_down(min(timestamps), MIN_PACKAGE_MIN)
         available_min = DAY_HOURS * 60
         lh, lm = _parse_hm(LUNCH_START)
@@ -587,7 +594,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
         reserved: list[tuple[datetime, datetime, str]] = []
 
         # Planned meetings
-        for ps, pe, desc in _prefilled_blocks(date):
+        for ps, pe, desc in prefilled:
             reserved.append((ps, pe, desc if desc else "Meeting"))
 
         # Lunch break
@@ -600,13 +607,19 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
         for rs, re, rdesc in reserved:
             if rdesc == "Mittagspause":
                 continue
+            # Clip to day window so meeting time outside the budget
+            # doesn't inflate the total beyond DAY_HOURS.
+            rs_c = max(rs, day_start)
+            re_c = min(re, day_end)
+            if re_c <= rs_c:
+                continue
             rows.append({
                 "Wochentag":    dow_de,
                 "Datum":        date.strftime("%-m/%-d/%y"),
-                "Von":          rs.strftime("%H:%M"),
-                "Bis":          re.strftime("%H:%M"),
+                "Von":          rs_c.strftime("%H:%M"),
+                "Bis":          re_c.strftime("%H:%M"),
                 "Beschreibung": rdesc,
-                "_start":       rs,
+                "_start":       rs_c,
                 "_reserved":    True,
             })
 
