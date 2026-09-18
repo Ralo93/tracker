@@ -36,7 +36,7 @@ app: build
 	@echo "🐍 Creating bundled Python environment..."
 	python3 -m venv "$(APP_BUNDLE)/Contents/Resources/venv"
 	"$(APP_BUNDLE)/Contents/Resources/venv/bin/python3" -m pip install --upgrade pip --quiet
-	"$(APP_BUNDLE)/Contents/Resources/venv/bin/python3" -m pip install openpyxl --quiet
+	"$(APP_BUNDLE)/Contents/Resources/venv/bin/python3" -m pip install openpyxl openai --quiet
 	@echo "🎨 Generating icon..."
 	@swift Scripts/generate-icon.swift
 	@cp /tmp/WorkLogger.icns "$(APP_BUNDLE)/Contents/Resources/AppIcon.icns"

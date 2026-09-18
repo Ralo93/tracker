@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Q&amp;A Quality Inspector</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --bg-panel: #1a212b;
+    --bg-elev: #232d3a;
+    --border: #2e3a4a;
+    --text: #e6edf3;
+    --text-dim: #9aa7b4;
+    --accent: #4c9aff;
+    --good: #3fb950;
+    --warn: #d29922;
+    --bad: #f85149;
+    --chip: #2d3948;
+    --radius: 8px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; letter-spacing: .2px; }
+  header .sub { color: var(--text-dim); font-size: 12px; }
+  .spacer { flex: 1; }
+  button, label.btn {
+    font: inherit;
+    font-size: 13px;
+    background: var(--bg-elev);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+  button:hover, label.btn:hover { border-color: var(--accent); }
+  input[type="file"] { display: none; }
+
+  .stats { display: flex; gap: 14px; font-size: 12px; color: var(--text-dim); }
+  .stats b { color: var(--text); font-size: 14px; }
+  .stat { text-align: center; }
+  .stat .n { display: block; }
+
+  main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  #sidebar {
+    width: 380px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--bg-panel);
+  }
+  .controls { padding: 10px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+  .controls input[type="search"], .controls select {
+    width: 100%; font: inherit; font-size: 13px;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 10px;
+  }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-chip {
+    font-size: 11px; padding: 4px 9px; border-radius: 20px;
+    background: var(--chip); border: 1px solid transparent; cursor: pointer; color: var(--text-dim);
+    user-select: none;
+  }
+  .filter-chip.active { color: var(--text); border-color: currentColor; }
+  .filter-chip.f-good.active { color: var(--good); }
+  .filter-chip.f-warn.active { color: var(--warn); }
+  .filter-chip.f-bad.active { color: var(--bad); }
+
+  #list { overflow-y: auto; flex: 1; }
+  .item {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+  .item:hover { background: var(--bg-elev); }
+  .item.selected { background: var(--bg-elev); border-left-color: var(--accent); }
+  .item .qid { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+  .item .qtitle {
+    font-size: 13px; margin-top: 3px; line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .item .flags { margin-top: 6px; display: flex; gap: 5px; flex-wrap: wrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.good { background: var(--good); }
+  .dot.warn { background: var(--warn); }
+  .dot.bad { background: var(--bad); }
+
+  .grade { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; letter-spacing: .5px; }
+  .grade.good { background: rgba(63,185,80,.15); color: var(--good); }
+  .grade.warn { background: rgba(210,153,34,.15); color: var(--warn); }
+  .grade.bad { background: rgba(248,81,73,.15); color: var(--bad); }
+
+  /* Detail */
+  #detail { flex: 1; overflow-y: auto; padding: 22px 28px; }
+  #detail .empty {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: var(--text-dim); gap: 14px; text-align: center;
+  }
+  .drop { border: 2px dashed var(--border); border-radius: 12px; padding: 40px 60px; }
+  .drop.over { border-color: var(--accent); background: var(--bg-elev); }
+
+  .doc-head { color: var(--text-dim); font-size: 12px; margin-bottom: 4px; }
+  .qbig { font-size: 20px; font-weight: 600; line-height: 1.3; margin: 0 0 4px; }
+  .qmeta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .badge { font-size: 11px; font-family: var(--mono); background: var(--chip); padding: 3px 8px; border-radius: 5px; color: var(--text-dim); }
+
+  .qa-block { margin-bottom: 18px; }
+  .qa-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 6px; }
+  .qa-text {
+    background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; white-space: pre-wrap; line-height: 1.55; font-size: 14px;
+  }
+  .qa-text.q { border-left: 3px solid var(--accent); }
+  .qa-text.a { border-left: 3px solid var(--good); }
+  .qa-text.empty-val { color: var(--text-dim); font-style: italic; }
+
+  .findings { margin-top: 8px; }
+  .finding { display: flex; gap: 10px; align-items: flex-start; padding: 8px 12px; border-radius: var(--radius); margin-bottom: 6px; font-size: 13px; }
+  .finding.good { background: rgba(63,185,80,.08); }
+  .finding.warn { background: rgba(210,153,34,.08); }
+  .finding.bad { background: rgba(248,81,73,.08); }
+  .finding .ic { font-weight: 700; }
+  .finding.good .ic { color: var(--good); }
+  .finding.warn .ic { color: var(--warn); }
+  .finding.bad .ic { color: var(--bad); }
+  .finding .msg small { color: var(--text-dim); display: block; margin-top: 2px; }
+
+  details.meta { margin-top: 20px; }
+  details.meta summary { cursor: pointer; color: var(--text-dim); font-size: 13px; }
+  .kv { display: grid; grid-template-columns: 180px 1fr; gap: 4px 16px; margin-top: 10px; font-size: 13px; }
+  .kv dt { color: var(--text-dim); }
+  .kv dd { margin: 0; word-break: break-word; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips span { background: var(--chip); padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+  a { color: var(--accent); }
+  code { font-family: var(--mono); }
+
+  /* View toggle */
+  .viewtoggle { display: flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .viewtoggle button { border: none; border-radius: 0; background: transparent; padding: 6px 14px; }
+  .viewtoggle button:hover { border: none; background: var(--bg-elev); }
+  .viewtoggle button.active { background: var(--accent); color: #fff; }
+
+  /* Graph view */
+  #graphView { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .graph-toolbar { display: flex; align-items: center; gap: 18px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-panel); flex-wrap: wrap; flex-shrink: 0; }
+  .graph-toolbar .title { font-weight: 600; font-size: 14px; }
+  .graph-toolbar label.chk { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); cursor: pointer; }
+  .graph-legend { display: flex; gap: 16px; font-size: 12px; color: var(--text-dim); align-items: center; flex-wrap: wrap; }
+  .graph-legend .li { display: flex; align-items: center; gap: 6px; }
+  .leg-line { width: 24px; border-top: 2px solid var(--accent); }
+  .leg-line.reuse { border-top: 2px dashed var(--good); }
+  .leg-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  #graphCanvas { flex: 1; position: relative; overflow: hidden; }
+  .ghint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-dim); text-align: center; padding: 20px; }
+  .graph-svg { display: block; }
+  .gedge { fill: none; }
+  .gedge.ref { stroke: var(--accent); stroke-width: 1.7px; }
+  .gedge.reuse { stroke: var(--good); stroke-width: 1.5px; stroke-dasharray: 5 4; }
+  .gnode { transition: opacity .1s; cursor: pointer; }
+  .gnode-circle { stroke: var(--bg); stroke-width: 2px; }
+  .gnode-label { fill: #fff; font-size: 11px; font-weight: 600; text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: var(--mono); }
+  .graph-svg.dim .gedge { opacity: .05; }
+  .graph-svg.dim .gnode { opacity: .12; }
+  .graph-svg.dim .gedge.hl { opacity: 1; }
+  .graph-svg.dim .gnode.hl { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Q&amp;A Quality Inspector</h1>
+    <div class="sub" id="fileName">No file loaded</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="viewtoggle" id="viewToggle">
+    <button data-view="inspector" class="active">Inspector</button>
+    <button data-view="graph">Graph</button>
+  </div>
+  <div class="stats" id="stats" hidden>
+    <div class="stat"><b class="n" id="stTotal">0</b><span>items</span></div>
+    <div class="stat"><b class="n" id="stGood" style="color:var(--good)">0</b><span>ok</span></div>
+    <div class="stat"><b class="n" id="stWarn" style="color:var(--warn)">0</b><span>warn</span></div>
+    <div class="stat"><b class="n" id="stBad" style="color:var(--bad)">0</b><span>issues</span></div>
+  </div>
+  <label class="btn">Load JSON<input type="file" id="fileInput" accept="application/json,.json" /></label>
+</header>
+
+<main>
+  <aside id="sidebar">
+    <div class="controls">
+      <input type="search" id="search" placeholder="Search question / answer / id…" />
+      <select id="docSelect"><option value="">All documents</option></select>
+      <div class="filter-row" id="filters">
+        <span class="filter-chip active" data-f="all">All</span>
+        <span class="filter-chip f-good" data-f="good">OK</span>
+        <span class="filter-chip f-warn" data-f="warn">Warnings</span>
+        <span class="filter-chip f-bad" data-f="bad">Issues</span>
+      </div>
+    </div>
+    <div id="list"></div>
+  </aside>
+
+  <section id="detail">
+    <div class="empty" id="emptyState">
+      <div class="drop" id="drop">
+        <div style="font-size:15px;color:var(--text)">Drop a Q&amp;A JSON file here</div>
+        <div style="margin-top:6px">or use the <b>Load JSON</b> button</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="graphView" hidden>
+    <div class="graph-toolbar">
+      <span class="title">Reference graph</span>
+      <label class="chk"><input type="checkbox" id="onlyConnected" checked /> Only linked questions</label>
+      <div class="graph-legend">
+        <span class="li"><span class="leg-line"></span> references answer of</span>
+        <span class="li"><span class="leg-line reuse"></span> shares answer (reused)</span>
+        <span class="li"><span class="leg-dot" style="background:var(--good)"></span> ok</span>
+        <span class="li"><span class="leg-dot" style="background:var(--warn)"></span> warn</span>
+        <span class="li"><span class="leg-dot" style="background:var(--bad)"></span> issue</span>
+      </div>
+    </div>
+    <div id="graphCanvas"><div class="ghint">Load a Q&amp;A JSON file to see the reference graph.</div></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+
+const state = { items: [], filtered: [], selected: null, filter: "all", query: "", doc: "", view: "inspector", onlyConnected: true };
+
+const CROSSREF_RE = /\bauf (?:die )?(?:antwort(?:en)?|frage[n]?)\b[\s\S]*?\bverwiesen\b/i;
+
+// Extract the question numbers an answer defers to, e.g.
+// "Auf die Antwort zu Frage 5 wird verwiesen" -> [5]
+// "Auf die Antwort zu den Fragen 7 bis 11 wird verwiesen" -> [7,8,9,10,11]
+function parseNums(s) {
+  const bis = s.match(/(\d+)\s*bis\s*(\d+)/i);
+  if (bis) {
+    const a = +bis[1], b = +bis[2], out = [];
+    for (let i = Math.min(a, b); i <= Math.max(a, b); i++) out.push(i);
+    return out;
+  }
+  return (s.match(/\d+/g) || []).map(Number);
+}
+function extractRefs(text) {
+  const refs = new Set();
+  const re = /auf die Antwort(?:en)?\s+zu\s+(?:den\s+)?Frage[n]?\s+(\d+(?:\s*bis\s*\d+)?(?:(?:\s*,\s*|\s+und\s+)\d+)*)/gi;
+  let m;
+  while ((m = re.exec(text))) parseNums(m[1]).forEach(n => refs.add(n));
+  return [...refs];
+}
+
+function analyze(item) {
+  const q = (item.question?.text || "").trim();
+  const a = (item.response?.text || "").trim();
+  const findings = [];
+  const refs = a ? extractRefs(a) : [];
+
+  if (!a) {
+    findings.push({ level: "bad", title: "Empty answer", detail: "The response text is missing." });
+  } else {
+    if (refs.length) {
+      findings.push({ level: "warn", title: "Cross-reference", detail: "Defers to the answer of question " + refs.join(", ") + " instead of answering directly." });
+    } else if (CROSSREF_RE.test(a)) {
+      findings.push({ level: "warn", title: "Cross-reference only", detail: "Answer refers elsewhere instead of answering directly." });
+    }
+    if (a.length < 120 && !CROSSREF_RE.test(a)) {
+      findings.push({ level: "warn", title: "Very short answer", detail: a.length + " characters — may be incomplete." });
+    }
+    if (item._dupAnswer) {
+      findings.push({ level: "warn", title: "Reused answer", detail: "Answer id \"" + item.response.answer_id + "\" is shared by " + item._dupAnswer + " questions." });
+    }
+  }
+
+  if (!q) findings.push({ level: "bad", title: "Empty question", detail: "The question text is missing." });
+
+  const qp = item.metadata?.question_page, ap = item.metadata?.answer_page;
+  if (typeof qp === "number" && typeof ap === "number" && ap < qp) {
+    findings.push({ level: "warn", title: "Page order", detail: "Answer page (" + ap + ") precedes question page (" + qp + ")." });
+  }
+
+  // consistency between title/text and question.text
+  const titleQ = (item.title || "").trim();
+  if (q && titleQ && !titleQ.startsWith(q.slice(0, 20)) && !q.startsWith(titleQ.slice(0, 20))) {
+    findings.push({ level: "warn", title: "Title/question mismatch", detail: "Item title does not match the question text." });
+  }
+
+  let grade = "good";
+  if (findings.some(f => f.level === "bad")) grade = "bad";
+  else if (findings.some(f => f.level === "warn")) grade = "warn";
+  if (grade === "good") findings.unshift({ level: "good", title: "No issues detected", detail: "Answer is substantive and self-contained." });
+
+  return { findings, grade, refs };
+}
+
+function loadData(json, name) {
+  const docs = json.documents || [];
+  const items = [];
+
+  // count answer_id reuse across all pairs
+  const answerCount = {};
+  docs.forEach(d => (d.qa_pairs || []).forEach(p => {
+    const id = p.response?.answer_id;
+    if (id) answerCount[id] = (answerCount[id] || 0) + 1;
+  }));
+
+  docs.forEach(doc => {
+    const docTitle = doc.metadata?.dokumentnummer || doc.title || doc.iid;
+    (doc.qa_pairs || []).forEach(p => {
+      const aid = p.response?.answer_id;
+      const dup = aid && answerCount[aid] > 1 ? answerCount[aid] : 0;
+      const item = { ...p, _dupAnswer: dup, _docTitle: docTitle, _docIid: doc.iid, _docMeta: doc.metadata || {} };
+      const res = analyze(item);
+      item._findings = res.findings;
+      item._grade = res.grade;
+      item._refs = res.refs;
+      items.push(item);
+    });
+  });
+
+  state.items = items;
+  document.getElementById("fileName").textContent = name + " — " + docs.length + " document(s)";
+
+  const sel = document.getElementById("docSelect");
+  sel.innerHTML = '<option value="">All documents</option>';
+  docs.forEach(d => {
+    const o = document.createElement("option");
+    o.value = d.iid;
+    o.textContent = (d.metadata?.dokumentnummer || d.iid) + " (" + (d.qa_pairs?.length || 0) + ")";
+    sel.appendChild(o);
+  });
+
+  document.getElementById("stats").hidden = false;
+  applyFilters();
+  if (state.view === "graph") renderGraph();
+}
+
+function applyFilters() {
+  const q = state.query.toLowerCase();
+  state.filtered = state.items.filter(it => {
+    if (state.doc && it._docIid !== state.doc) return false;
+    if (state.filter !== "all" && it._grade !== state.filter) return false;
+    if (q) {
+      const hay = (it.question?.text || "") + " " + (it.response?.text || "") + " " + (it.iid || "");
+      if (!hay.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+  renderStats();
+  renderList();
+}
+
+function renderStats() {
+  const c = { good: 0, warn: 0, bad: 0 };
+  state.items.forEach(i => c[i._grade]++);
+  document.getElementById("stTotal").textContent = state.items.length;
+  document.getElementById("stGood").textContent = c.good;
+  document.getElementById("stWarn").textContent = c.warn;
+  document.getElementById("stBad").textContent = c.bad;
+}
+
+function renderList() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+  if (!state.filtered.length) {
+    list.innerHTML = '<div style="padding:20px;color:var(--text-dim);font-size:13px">No matching items.</div>';
+    return;
+  }
+  state.filtered.forEach(it => {
+    const el = document.createElement("div");
+    el.className = "item" + (state.selected === it ? " selected" : "");
+    const dot = '<span class="dot ' + it._grade + '"></span>';
+    el.innerHTML =
+      '<div class="qid">' + dot + ' ' + escapeHtml(it.iid || "") + ' · ' + escapeHtml(it._docTitle) + '</div>' +
+      '<div class="qtitle">' + escapeHtml((it.question?.text || "(no question)").replace(/\s+/g, " ")) + '</div>' +
+      '<div class="flags">' + it._findings.filter(f => f.level !== "good").map(f =>
+        '<span class="grade ' + f.level + '">' + escapeHtml(f.title) + '</span>').join("") + '</div>';
+    el.onclick = () => selectItem(it);
+    list.appendChild(el);
+  });
+}
+
+function selectItem(it) {
+  state.selected = it;
+  if (state.view !== "inspector") setView("inspector");
+  renderList();
+  renderDetail(it);
+}
+
+function renderDetail(it) {
+  const d = document.getElementById("detail");
+  const q = (it.question?.text || "").trim();
+  const a = (it.response?.text || "").trim();
+  const m = it.metadata || {};
+  const dm = it._docMeta;
+
+  const findingsHtml = it._findings.map(f =>
+    '<div class="finding ' + f.level + '"><span class="ic">' +
+    (f.level === "good" ? "✓" : f.level === "warn" ? "!" : "✕") +
+    '</span><div class="msg">' + escapeHtml(f.title) + '<small>' + escapeHtml(f.detail) + '</small></div></div>'
+  ).join("");
+
+  const descriptors = (dm.deskriptor || []).map(x => '<span>' + escapeHtml(x) + '</span>').join("");
+
+  d.innerHTML =
+    '<div class="doc-head">' + escapeHtml(dm.dokumentnummer || it._docTitle) + ' · ' + escapeHtml(dm.datum || "") + '</div>' +
+    '<h2 class="qbig">' + escapeHtml((q || "(no question)").replace(/\s+/g, " ")) + '</h2>' +
+    '<div class="qmeta">' +
+      '<span class="grade ' + it._grade + '">' + it._grade.toUpperCase() + '</span>' +
+      '<span class="badge">' + escapeHtml(it.iid || "") + '</span>' +
+      '<span class="badge">Q p.' + (m.question_page ?? "?") + ' → A p.' + (m.answer_page ?? "?") + '</span>' +
+      '<span class="badge">' + escapeHtml(m.source_name || "") + '</span>' +
+    '</div>' +
+
+    '<div class="findings">' + findingsHtml + '</div>' +
+
+    '<div class="qa-block"><div class="qa-label">Question</div>' +
+      '<div class="qa-text q' + (q ? "" : " empty-val") + '">' + (q ? escapeHtml(q) : "— empty —") + '</div></div>' +
+
+    '<div class="qa-block"><div class="qa-label">Answer</div>' +
+      '<div class="qa-text a' + (a ? "" : " empty-val") + '">' + (a ? escapeHtml(a) : "— empty —") + '</div></div>' +
+
+    '<details class="meta"><summary>Document metadata</summary>' +
+      '<dl class="kv">' +
+        kv("Title", dm.titel ? dm.titel.replace(/\s+/g, " ") : "") +
+        kv("Drucksachetyp", dm.drucksachetyp) +
+        kv("Wahlperiode", dm.wahlperiode) +
+        kv("Herausgeber", dm.herausgeber_lang) +
+        kv("Ressort", (dm.ressort || []).join(", ")) +
+        kv("Sachgebiet", (dm.sachgebiet || []).join(", ")) +
+        (dm.pdf_url ? '<dt>PDF</dt><dd><a href="' + encodeURI(dm.pdf_url) + '" target="_blank" rel="noopener">' + escapeHtml(dm.pdf_url) + '</a></dd>' : "") +
+        (descriptors ? '<dt>Deskriptoren</dt><dd class="chips">' + descriptors + '</dd>' : "") +
+      '</dl>' +
+    '</details>';
+}
+
+function kv(k, v) {
+  if (v === undefined || v === null || v === "") return "";
+  return "<dt>" + escapeHtml(k) + "</dt><dd>" + escapeHtml(String(v)) + "</dd>";
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// ---- wiring ----
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      loadData(JSON.parse(e.target.result), file.name);
+    } catch (err) {
+      alert("Could not parse JSON: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById("fileInput").addEventListener("change", e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+document.getElementById("search").addEventListener("input", e => { state.query = e.target.value; applyFilters(); });
+document.getElementById("docSelect").addEventListener("change", e => { state.doc = e.target.value; applyFilters(); if (state.view === "graph") renderGraph(); });
+document.getElementById("filters").addEventListener("click", e => {
+  const chip = e.target.closest(".filter-chip");
+  if (!chip) return;
+  document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+  chip.classList.add("active");
+  state.filter = chip.dataset.f;
+  applyFilters();
+});
+
+const drop = document.getElementById("drop");
+["dragenter", "dragover"].forEach(ev => document.addEventListener(ev, e => {
+  e.preventDefault(); if (drop) drop.classList.add("over");
+}));
+["dragleave", "drop"].forEach(ev => document.addEventListener(ev, e => {
+  e.preventDefault(); if (drop && ev !== "drop") drop.classList.remove("over");
+}));
+document.addEventListener("drop", e => {
+  e.preventDefault();
+  if (drop) drop.classList.remove("over");
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+
+// ---- view switching ----
+function setView(view) {
+  state.view = view;
+  document.querySelectorAll("#viewToggle button").forEach(b =>
+    b.classList.toggle("active", b.dataset.view === view));
+  const graph = view === "graph";
+  document.getElementById("sidebar").hidden = graph;
+  document.getElementById("detail").hidden = graph;
+  document.getElementById("graphView").hidden = !graph;
+  if (graph) renderGraph();
+}
+document.getElementById("viewToggle").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (b) setView(b.dataset.view);
+});
+document.getElementById("onlyConnected").addEventListener("change", e => {
+  state.onlyConnected = e.target.checked;
+  renderGraph();
+});
+let resizeTimer;
+window.addEventListener("resize", () => {
+  if (state.view !== "graph") return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(renderGraph, 120);
+});
+
+// ---- graph ----
+function qNum(it) {
+  const id = it.question?.question_id;
+  if (id) { const m = String(id).match(/\d+/); if (m) return +m[0]; }
+  const m2 = String(it.title || "").match(/^\s*(\d+)/);
+  return m2 ? +m2[1] : null;
+}
+
+function buildGraphModel(docIid) {
+  const items = state.items.filter(i => i._docIid === docIid);
+  const byNum = new Map();
+  items.forEach(it => { const n = qNum(it); if (n != null) byNum.set(n, it); });
+
+  const edges = [];
+  items.forEach(it => {
+    const s = qNum(it);
+    (it._refs || []).forEach(t => { if (t !== s && byNum.has(t)) edges.push({ type: "ref", s, t }); });
+  });
+
+  const groups = {};
+  items.forEach(it => {
+    const aid = it.response?.answer_id, n = qNum(it);
+    if (aid && n != null) (groups[aid] = groups[aid] || []).push(n);
+  });
+  const reused = [];
+  Object.entries(groups).forEach(([aid, nums]) => {
+    const v = [...new Set(nums.filter(n => byNum.has(n)))].sort((a, b) => a - b);
+    for (let i = 0; i < v.length; i++)
+      for (let j = i + 1; j < v.length; j++)
+        reused.push({ type: "reuse", s: v[i], t: v[j], aid });
+  });
+
+  const connected = new Set();
+  [...edges, ...reused].forEach(e => { connected.add(e.s); connected.add(e.t); });
+
+  let nums = [...byNum.keys()];
+  if (state.onlyConnected) nums = nums.filter(n => connected.has(n));
+  const nodes = nums.sort((a, b) => a - b).map(n => ({ num: n, item: byNum.get(n) }));
+  return { nodes, edges, reused };
+}
+
+function renderGraph() {
+  const canvas = document.getElementById("graphCanvas");
+  const docIid = state.doc || (state.items[0] && state.items[0]._docIid) || "";
+  if (!docIid) { canvas.innerHTML = '<div class="ghint">Load a Q&amp;A JSON file to see the reference graph.</div>'; return; }
+
+  const model = buildGraphModel(docIid);
+  if (!model.nodes.length) {
+    canvas.innerHTML = '<div class="ghint">No cross-references or reused answers found in this document.</div>';
+    return;
+  }
+
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  const cx = W / 2, cy = H / 2;
+  const R = Math.max(70, Math.min(W, H) / 2 - 80);
+  const N = model.nodes.length;
+  const pos = new Map();
+  model.nodes.forEach((nd, i) => {
+    const ang = -Math.PI / 2 + i * 2 * Math.PI / N;
+    pos.set(nd.num, { x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) });
+  });
+
+  const towards = (p, ctrl, d) => {
+    const dx = p.x - ctrl.x, dy = p.y - ctrl.y, L = Math.hypot(dx, dy) || 1;
+    return { x: p.x - dx / L * d, y: p.y - dy / L * d };
+  };
+  const pathFor = (a, b, trimA, trimB) => {
+    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, k = 0.4;
+    const ctrl = { x: mx + (cx - mx) * k, y: my + (cy - my) * k };
+    const s = towards(a, ctrl, trimA), e = towards(b, ctrl, trimB);
+    return `M${s.x.toFixed(1)},${s.y.toFixed(1)} Q${ctrl.x.toFixed(1)},${ctrl.y.toFixed(1)} ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
+  };
+
+  const gradColor = { good: "var(--good)", warn: "var(--warn)", bad: "var(--bad)" };
+  let svg = '<svg class="graph-svg" width="' + W + '" height="' + H + '">' +
+    '<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+    '<path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>';
+
+  model.reused.forEach(e => {
+    svg += '<path class="gedge reuse" data-s="' + e.s + '" data-t="' + e.t + '" d="' +
+      pathFor(pos.get(e.s), pos.get(e.t), 15, 15) + '"/>';
+  });
+  model.edges.forEach(e => {
+    svg += '<path class="gedge ref" data-s="' + e.s + '" data-t="' + e.t +
+      '" marker-end="url(#arrow)" d="' + pathFor(pos.get(e.s), pos.get(e.t), 15, 19) + '"/>';
+  });
+
+  model.nodes.forEach(nd => {
+    const p = pos.get(nd.num);
+    const qtxt = (nd.item.question?.text || "").replace(/\s+/g, " ").slice(0, 140);
+    svg += '<g class="gnode" data-num="' + nd.num + '">' +
+      '<title>' + escapeHtml("Q" + nd.num + " · " + nd.item._grade + "\n" + qtxt) + '</title>' +
+      '<circle class="gnode-circle" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="15" fill="' + gradColor[nd.item._grade] + '"/>' +
+      '<text class="gnode-label" x="' + p.x.toFixed(1) + '" y="' + p.y.toFixed(1) + '">' + nd.num + '</text>' +
+      '</g>';
+  });
+  svg += "</svg>";
+  canvas.innerHTML = svg;
+
+  // adjacency for hover highlight
+  const adj = new Map();
+  model.nodes.forEach(nd => adj.set(nd.num, new Set([nd.num])));
+  [...model.edges, ...model.reused].forEach(e => { adj.get(e.s)?.add(e.t); adj.get(e.t)?.add(e.s); });
+
+  const svgEl = canvas.querySelector("svg");
+  canvas.querySelectorAll(".gnode").forEach(g => {
+    const num = +g.dataset.num;
+    g.addEventListener("mouseenter", () => {
+      svgEl.classList.add("dim");
+      const near = adj.get(num);
+      canvas.querySelectorAll(".gnode").forEach(n => n.classList.toggle("hl", near.has(+n.dataset.num)));
+      canvas.querySelectorAll(".gedge").forEach(ed => {
+        const s = +ed.dataset.s, t = +ed.dataset.t;
+        ed.classList.toggle("hl", s === num || t === num);
+      });
+    });
+    g.addEventListener("mouseleave", () => {
+      svgEl.classList.remove("dim");
+      canvas.querySelectorAll(".hl").forEach(n => n.classList.remove("hl"));
+    });
+    g.addEventListener("click", () => {
+      const it = model.nodes.find(n => n.num === num)?.item;
+      if (it) selectItem(it);
+    });
+  });
+}
+</script>
+</body>
+</html>

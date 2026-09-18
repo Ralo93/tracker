@@ -1,0 +1,791 @@
+{
+  "_meta": {
+    "importId": "1784282582472"
+  },
+  "site": {
+    "iid": "https://dip.bundestag.de",
+    "title": "DIP_QA_Wahlperiode_18",
+    "metadata": {
+      "scraped_at": "2026-07-17",
+      "scraper": {
+        "description": "DIP Azure QA Pipeline v2 — Wahlperiode 18 (endpoint=drucksache, dokumentart=Drucksache, drucksachetyp=Antwort)",
+        "runDuration": "",
+        "errors": ""
+      },
+      "source": "DIP API + Azure Blob Storage"
+    }
+  },
+  "folders": [
+    {
+      "iid": "Drucksache",
+      "title": "Drucksache",
+      "parent": "",
+      "metadata": {
+        "url": "https://dip.bundestag.de"
+      }
+    }
+  ],
+  "documents": [
+    {
+      "iid": "68834",
+      "title": "auf die Kleine Anfrage\r\n- Drucksache 18/13599 -\r\nDer Compact with Africa und geplante „Reformpartnerschaften“ mit afrikanischen Ländern zur Verbesserung von Investitionsbedingungen\r\n",
+      "folder": "Drucksache",
+      "metadata": {
+        "scraper": {
+          "description": "DIP Azure QA Pipeline v2 — Wahlperiode 18 (endpoint=drucksache, dokumentart=Drucksache, drucksachetyp=Antwort)",
+          "runDuration": "",
+          "errors": ""
+        },
+        "url": "https://dserver.bundestag.de/btd/18/136/1813697.pdf",
+        "dip_id": "68834",
+        "dokumentart": "Drucksache",
+        "dokumentnummer": "18/13697",
+        "wahlperiode": 18,
+        "herausgeber": "BT",
+        "herausgeber_lang": "Bundestag",
+        "datum": "2017-10-23",
+        "year": "2017",
+        "aktualisiert": "2022-07-26T19:57:18+02:00",
+        "titel": "auf die Kleine Anfrage\r\n- Drucksache 18/13599 -\r\nDer Compact with Africa und geplante „Reformpartnerschaften“ mit afrikanischen Ländern zur Verbesserung von Investitionsbedingungen\r\n",
+        "pdf_url": "https://dserver.bundestag.de/btd/18/136/1813697.pdf",
+        "xml_url": null,
+        "deskriptor": [
+          "Afrika",
+          "Arbeits- und Sozialstandards",
+          "Auslandsinvestition",
+          "Bundesmittel",
+          "Entwicklungszusammenarbeit",
+          "G-20-Staaten",
+          "Internationale Bank für Wiederaufbau und Entwicklung",
+          "Internationale Zusammenarbeit",
+          "Internationaler Investitionsschutz",
+          "Investition",
+          "Investitionsförderung",
+          "Public Private Partnership",
+          "Reform",
+          "Steueraufkommen"
+        ],
+        "sachgebiet": [
+          "Entwicklungspolitik",
+          "Öffentliche Finanzen, Steuern und Abgaben"
+        ],
+        "vorgangsbezug": [
+          {
+            "id": "83918",
+            "titel": "Der Compact with Africa und geplante \"Reformpartnerschaften\" mit afrikanischen Ländern zur Verbesserung von Investitionsbedingungen",
+            "vorgangstyp": "Kleine Anfrage"
+          }
+        ],
+        "vorgangsbezug_anzahl": 1,
+        "drucksachetyp": "Antwort",
+        "urheber": [
+          "Bundesregierung"
+        ],
+        "ressort": [
+          "Bundesministerium der Finanzen"
+        ],
+        "autoren_anzeige": [],
+        "autoren_anzahl": 0
+      },
+      "qa_pairs": [
+        {
+          "iid": "q1-a1",
+          "title": "1.\nWelche weiteren (d. h. außer den sieben in der Vorbemerkung der Fragestel­\nler genannten) Länder haben nach Informationen Interesse an der CwA-Ini­\ntiative gezeigt bzw. durchlaufen gerade den Auswahlprozess?",
+          "text": "1.\nWelche weiteren (d. h. außer den sieben in der Vorbemerkung der Fragestel­\nler genannten) Länder haben nach Informationen Interesse an der CwA-Ini­\ntiative gezeigt bzw. durchlaufen gerade den Auswahlprozess?\n\nBeim Treffen der G20-Finanzminister und -Notenbankgouverneure am Rande der\nJahrestagung von IWF und Weltbank am 12. und 13. Oktober 2017 in Washing­\nton wurden Ägypten, Benin und Guinea in die „G20 Compact with Africa“\n(CWA)-Initiative aufgenommen. Die Initiative steht allen reformbereiten afrika­\nnischen Ländern offen, sofern sie die international organizations (IOs) von ihrem\n„commitment“ zur Verbesserung der Rahmenbedingungen überzeugen und ei­\nnige prozessuale Anforderungen erfüllen (sieh Hamburg Action Plan).",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 2,
+            "answer_page": 2
+          },
+          "question": {
+            "text": "1.\nWelche weiteren (d. h. außer den sieben in der Vorbemerkung der Fragestel­\nler genannten) Länder haben nach Informationen Interesse an der CwA-Ini­\ntiative gezeigt bzw. durchlaufen gerade den Auswahlprozess?",
+            "question_id": "q1"
+          },
+          "response": {
+            "text": "Beim Treffen der G20-Finanzminister und -Notenbankgouverneure am Rande der\nJahrestagung von IWF und Weltbank am 12. und 13. Oktober 2017 in Washing­\nton wurden Ägypten, Benin und Guinea in die „G20 Compact with Africa“\n(CWA)-Initiative aufgenommen. Die Initiative steht allen reformbereiten afrika­\nnischen Ländern offen, sofern sie die international organizations (IOs) von ihrem\n„commitment“ zur Verbesserung der Rahmenbedingungen überzeugen und ei­\nnige prozessuale Anforderungen erfüllen (sieh Hamburg Action Plan).",
+            "answer_id": "a1"
+          }
+        },
+        {
+          "iid": "q2-a2",
+          "title": "2.\nInwiefern handelt es sich bei den bilateralen Reformpartnerschaften um\nschriftliche, verbindliche Vereinbarungen?",
+          "text": "2.\nInwiefern handelt es sich bei den bilateralen Reformpartnerschaften um\nschriftliche, verbindliche Vereinbarungen?\n\nIm Juni 2017 wurden Absichtserklärungen zwischen dem Bundesministerium für\nwirtschaftliche Zusammenarbeit und Entwicklung (BMZ) und den betreffenden\nRessorts in den Reformländern unterzeichnet. Die bilateralen Reformpartner­\nschaften des BMZ als bilaterale Beiträge zur CWA-Initiative der G20 befinden sich derzeit in Aushandlung. Ziel ist es, die darin enthaltenen Maßnahmen ent­\nsprechend den in der Entwicklungszusammenarbeit üblichen Verfahren nach der\npolitischen Einigung in Notenwechseln völkerrechtlich verbindlich zu vereinba­\nren.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 2,
+            "answer_page": 2
+          },
+          "question": {
+            "text": "2.\nInwiefern handelt es sich bei den bilateralen Reformpartnerschaften um\nschriftliche, verbindliche Vereinbarungen?",
+            "question_id": "q2"
+          },
+          "response": {
+            "text": "Im Juni 2017 wurden Absichtserklärungen zwischen dem Bundesministerium für\nwirtschaftliche Zusammenarbeit und Entwicklung (BMZ) und den betreffenden\nRessorts in den Reformländern unterzeichnet. Die bilateralen Reformpartner­\nschaften des BMZ als bilaterale Beiträge zur CWA-Initiative der G20 befinden sich derzeit in Aushandlung. Ziel ist es, die darin enthaltenen Maßnahmen ent­\nsprechend den in der Entwicklungszusammenarbeit üblichen Verfahren nach der\npolitischen Einigung in Notenwechseln völkerrechtlich verbindlich zu vereinba­\nren.",
+            "answer_id": "a2"
+          }
+        },
+        {
+          "iid": "q3-a3",
+          "title": "3.\nWo finden sich die Finanzmittel für die von Deutschland geplanten Reform­\npartnerschaften im Haushalt aus dem Jahr 2017 bzw. in den Haushaltspla­\nnungen der Folgejahre wieder? Inwiefern handelt es sich dabei um „neues Geld“, bzw. aus welchen beste­\nhenden Töpfen werden die Mittel hierfür verwendet?",
+          "text": "3.\nWo finden sich die Finanzmittel für die von Deutschland geplanten Reform­\npartnerschaften im Haushalt aus dem Jahr 2017 bzw. in den Haushaltspla­\nnungen der Folgejahre wieder? Inwiefern handelt es sich dabei um „neues Geld“, bzw. aus welchen beste­\nhenden Töpfen werden die Mittel hierfür verwendet?\n\nFür die drei im Jahr 2017 avisierten Reformpartnerschaften ist im Haushalt 2017\nVorsorge i. H. v. bis zu 300 Mio. Euro getroffen worden. Die Mittel wurden durch\nReallokationen in den Länderportfolien bereitgestellt und entstammen den Haus­\nhaltstiteln für Bilaterale Finanzielle und Technische Zusammenarbeit des Einzel­\nplans 23. Die Aufstellung des zweiten Haushaltsentwurfs 2018 erfolgt zu gege­\nbener Zeit durch die neu ernannte Bundesregierung.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 3,
+            "answer_page": 3
+          },
+          "question": {
+            "text": "3.\nWo finden sich die Finanzmittel für die von Deutschland geplanten Reform­\npartnerschaften im Haushalt aus dem Jahr 2017 bzw. in den Haushaltspla­\nnungen der Folgejahre wieder? Inwiefern handelt es sich dabei um „neues Geld“, bzw. aus welchen beste­\nhenden Töpfen werden die Mittel hierfür verwendet?",
+            "question_id": "q3"
+          },
+          "response": {
+            "text": "Für die drei im Jahr 2017 avisierten Reformpartnerschaften ist im Haushalt 2017\nVorsorge i. H. v. bis zu 300 Mio. Euro getroffen worden. Die Mittel wurden durch\nReallokationen in den Länderportfolien bereitgestellt und entstammen den Haus­\nhaltstiteln für Bilaterale Finanzielle und Technische Zusammenarbeit des Einzel­\nplans 23. Die Aufstellung des zweiten Haushaltsentwurfs 2018 erfolgt zu gege­\nbener Zeit durch die neu ernannte Bundesregierung.",
+            "answer_id": "a3"
+          }
+        },
+        {
+          "iid": "q4-a4",
+          "title": "4.\nInwiefern geht die CwA-Initiative nach Kenntnis der Bundesregierung über\ndie bilateralen Reformpartnerschaften hinaus? Welche andere Vereinbarungen, Abkommen etc. werden im Rahmen der Ini­\ntiative mit den afrikanischen Compact-Ländern geschlossen (bitte für die\nLänder einzeln aufschlüsseln)?",
+          "text": "4.\nInwiefern geht die CwA-Initiative nach Kenntnis der Bundesregierung über\ndie bilateralen Reformpartnerschaften hinaus? Welche andere Vereinbarungen, Abkommen etc. werden im Rahmen der Ini­\ntiative mit den afrikanischen Compact-Ländern geschlossen (bitte für die\nLänder einzeln aufschlüsseln)?\n\nDer CWA ist eine Initiative der G20. Sie wurde im sog. Finance Track der G20\n(G20-Finanzminister und -Notenbankpräsidenten) initiiert und wird dort in enger\nAbstimmung mit IWF, Weltbank und Afrikanischer Entwicklungsbank (AfDB)\nfortgeführt. Die Reformpartnerschaften stellen die bilateralen Beiträge Deutsch­\nlands für ausgewählte Länder im Rahmen des G20-CWA dar. Deutschland beab­\nsichtigt, im Rahmen des G20-CWA als bilateraler Partner mit Côte d’Ivoire,\nGhana und Tunesien zusammenzuarbeiten.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 3,
+            "answer_page": 3
+          },
+          "question": {
+            "text": "4.\nInwiefern geht die CwA-Initiative nach Kenntnis der Bundesregierung über\ndie bilateralen Reformpartnerschaften hinaus? Welche andere Vereinbarungen, Abkommen etc. werden im Rahmen der Ini­\ntiative mit den afrikanischen Compact-Ländern geschlossen (bitte für die\nLänder einzeln aufschlüsseln)?",
+            "question_id": "q4"
+          },
+          "response": {
+            "text": "Der CWA ist eine Initiative der G20. Sie wurde im sog. Finance Track der G20\n(G20-Finanzminister und -Notenbankpräsidenten) initiiert und wird dort in enger\nAbstimmung mit IWF, Weltbank und Afrikanischer Entwicklungsbank (AfDB)\nfortgeführt. Die Reformpartnerschaften stellen die bilateralen Beiträge Deutsch­\nlands für ausgewählte Länder im Rahmen des G20-CWA dar. Deutschland beab­\nsichtigt, im Rahmen des G20-CWA als bilateraler Partner mit Côte d’Ivoire,\nGhana und Tunesien zusammenzuarbeiten.",
+            "answer_id": "a4"
+          }
+        },
+        {
+          "iid": "q5-a5",
+          "title": "5.\nWelche administrativen, fiskal-politischen, wirtschaftspolitischen sowie et­\nwaige andere politische Reformen sollen nach Informationen der Bundesre­\ngierung zwischen den Compact-Ländern, den G20-Staaten und den interna­\ntionalen Finanzinstitutionen vereinbart werden bzw. sind bereits vereinbart\nworden (bitte für Compact-Länder einzeln aufschlüsseln)?",
+          "text": "5.\nWelche administrativen, fiskal-politischen, wirtschaftspolitischen sowie et­\nwaige andere politische Reformen sollen nach Informationen der Bundesre­\ngierung zwischen den Compact-Ländern, den G20-Staaten und den interna­\ntionalen Finanzinstitutionen vereinbart werden bzw. sind bereits vereinbart\nworden (bitte für Compact-Länder einzeln aufschlüsseln)?\n\nIm Rahmen des G20-CWA ist vorgesehen, dass die teilnehmenden afrikanischen\nLänder Maßnahmen zur Verbesserung der makroökonomischen, unternehmens-\nund finanzmarktpolitischen Rahmenbedingungen in ihren Ländern anstreben. Bei\nder Umsetzung der angestrebten Maßnahmen sollen sie von IWF, Weltbank und\nAfDB sowie bilateralen Partnern unterstützt werden. Sieben Compact-Länder (Äthiopien, Côte d’Ivoire, Ghana, Marokko, Ruanda,\nSenegal und Tunesien) haben zusammen mit IWF, Weltbank und AfDB sowie\nden bilateralen Partnern Maßnahmenkataloge erarbeitet. Diese wurden in einem\nBericht zusammengefasst und den Finanzministern und Notenbankgouverneuren\nanlässlich ihres Treffens am Rande der Jahrestagung von Weltbank und IWF im\nOktober 2017 vorgelegt. Allgemein liegen den angestrebten Reformen folgende Überlegungen zugrunde:\nZu den makroökonomischen Rahmenbedingungen für Investitionen gehören\nMaßnahmen zur Wahrung der gesamtwirtschaftlichen Stabilität, insbesondere der\nöffentlichen und privaten Verschuldung, und zur Bereitstellung angemessener öf­\nfentlicher Infrastruktur. Zu den wirtschaftspolitischen Rahmenbedingungen für Unternehmen gehören\ndas allgemeine Geschäftsklima für die Privatwirtschaft, Grundsätze der guten Re­\ngierungsführung, Regulierungspraxis und Planbarkeit, branchenspezifische Maß­\nnahmen, Unterstützung bei der Projektaufstellung sowie die Fähigkeit des Staates\nzur Durchführung Öffentlich-privater Partnerschaften. Zu den finanziellen Rahmenbedingungen für potenzielle Investoren gehören die\nVerfügbarkeit effizienter Instrumente zur Risikominderung (die von den multila­\nteralen Entwicklungsbanken, Entwicklungsfinanzierungsinstitutionen und Ent­\nwicklungshilfeagenturen bereitgestellt werden), Zugang zu inländischen Schuld­\ntiteln sowie Langzeitinvestitionen institutioneller und privater Anleger. Die Maßnahmenkataloge sorgen für Transparenz und sind Ausgangspunkt für die\nKoordinierung der Beiträge aller Partner mit dem Ziel der Förderung privater In­\nvestitionen. Damit fördert die G20 u. a. die Umsetzung der Agenda 2063 der Af­\nrikanischen Union und der Agenda 2030 für nachhaltige Entwicklung.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 3,
+            "answer_page": 3
+          },
+          "question": {
+            "text": "5.\nWelche administrativen, fiskal-politischen, wirtschaftspolitischen sowie et­\nwaige andere politische Reformen sollen nach Informationen der Bundesre­\ngierung zwischen den Compact-Ländern, den G20-Staaten und den interna­\ntionalen Finanzinstitutionen vereinbart werden bzw. sind bereits vereinbart\nworden (bitte für Compact-Länder einzeln aufschlüsseln)?",
+            "question_id": "q5"
+          },
+          "response": {
+            "text": "Im Rahmen des G20-CWA ist vorgesehen, dass die teilnehmenden afrikanischen\nLänder Maßnahmen zur Verbesserung der makroökonomischen, unternehmens-\nund finanzmarktpolitischen Rahmenbedingungen in ihren Ländern anstreben. Bei\nder Umsetzung der angestrebten Maßnahmen sollen sie von IWF, Weltbank und\nAfDB sowie bilateralen Partnern unterstützt werden. Sieben Compact-Länder (Äthiopien, Côte d’Ivoire, Ghana, Marokko, Ruanda,\nSenegal und Tunesien) haben zusammen mit IWF, Weltbank und AfDB sowie\nden bilateralen Partnern Maßnahmenkataloge erarbeitet. Diese wurden in einem\nBericht zusammengefasst und den Finanzministern und Notenbankgouverneuren\nanlässlich ihres Treffens am Rande der Jahrestagung von Weltbank und IWF im\nOktober 2017 vorgelegt. Allgemein liegen den angestrebten Reformen folgende Überlegungen zugrunde:\nZu den makroökonomischen Rahmenbedingungen für Investitionen gehören\nMaßnahmen zur Wahrung der gesamtwirtschaftlichen Stabilität, insbesondere der\nöffentlichen und privaten Verschuldung, und zur Bereitstellung angemessener öf­\nfentlicher Infrastruktur. Zu den wirtschaftspolitischen Rahmenbedingungen für Unternehmen gehören\ndas allgemeine Geschäftsklima für die Privatwirtschaft, Grundsätze der guten Re­\ngierungsführung, Regulierungspraxis und Planbarkeit, branchenspezifische Maß­\nnahmen, Unterstützung bei der Projektaufstellung sowie die Fähigkeit des Staates\nzur Durchführung Öffentlich-privater Partnerschaften. Zu den finanziellen Rahmenbedingungen für potenzielle Investoren gehören die\nVerfügbarkeit effizienter Instrumente zur Risikominderung (die von den multila­\nteralen Entwicklungsbanken, Entwicklungsfinanzierungsinstitutionen und Ent­\nwicklungshilfeagenturen bereitgestellt werden), Zugang zu inländischen Schuld­\ntiteln sowie Langzeitinvestitionen institutioneller und privater Anleger. Die Maßnahmenkataloge sorgen für Transparenz und sind Ausgangspunkt für die\nKoordinierung der Beiträge aller Partner mit dem Ziel der Förderung privater In­\nvestitionen. Damit fördert die G20 u. a. die Umsetzung der Agenda 2063 der Af­\nrikanischen Union und der Agenda 2030 für nachhaltige Entwicklung.",
+            "answer_id": "a5"
+          }
+        },
+        {
+          "iid": "q6-a6",
+          "title": "6.\nWer überwacht nach Informationen der Bundesregierung die Umsetzung der\nin der Frage 5 genannten Reformen, und welche möglichen Sanktionsme­\nchanismen gibt es dabei?",
+          "text": "6.\nWer überwacht nach Informationen der Bundesregierung die Umsetzung der\nin der Frage 5 genannten Reformen, und welche möglichen Sanktionsme­\nchanismen gibt es dabei?\n\nAuf dem G20-Gipfel in Hamburg wurde vereinbart, dass Koordinierung und Mo­\nnitoring der Initiative durch den Finanzministerprozess der G20 erfolgen. Im An­\nnex „G20 Africa Partnership“ zum G20-Kommuniqué von Hamburg wurde fest­\ngehalten, dass in enger Abstimmung mit den beteiligten Stakeholdern im Finance\nTrack eine Berichtsstruktur – im Einklang mit den bestehenden Berichtsmecha­\nnismen – eingerichtet wird, die es den G20 erlaubt, den CWA-Fortschritt zu ver­\nfolgen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 4,
+            "answer_page": 4
+          },
+          "question": {
+            "text": "6.\nWer überwacht nach Informationen der Bundesregierung die Umsetzung der\nin der Frage 5 genannten Reformen, und welche möglichen Sanktionsme­\nchanismen gibt es dabei?",
+            "question_id": "q6"
+          },
+          "response": {
+            "text": "Auf dem G20-Gipfel in Hamburg wurde vereinbart, dass Koordinierung und Mo­\nnitoring der Initiative durch den Finanzministerprozess der G20 erfolgen. Im An­\nnex „G20 Africa Partnership“ zum G20-Kommuniqué von Hamburg wurde fest­\ngehalten, dass in enger Abstimmung mit den beteiligten Stakeholdern im Finance\nTrack eine Berichtsstruktur – im Einklang mit den bestehenden Berichtsmecha­\nnismen – eingerichtet wird, die es den G20 erlaubt, den CWA-Fortschritt zu ver­\nfolgen.",
+            "answer_id": "a6"
+          }
+        },
+        {
+          "iid": "q7-a7",
+          "title": "7.\nWelche Infrastrukturbereiche oder Wirtschaftszweige sollen nach Auskunft\nder Bundesregierung in den einzelnen Compact-Ländern konkret kommer­\nzialisiert bzw. privatisiert werden (bitte für einzelne Länder getrennt anfüh­\nren)?",
+          "text": "7.\nWelche Infrastrukturbereiche oder Wirtschaftszweige sollen nach Auskunft\nder Bundesregierung in den einzelnen Compact-Ländern konkret kommer­\nzialisiert bzw. privatisiert werden (bitte für einzelne Länder getrennt anfüh­\nren)?\n\nZu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 4,
+            "answer_page": 5
+          },
+          "question": {
+            "text": "7.\nWelche Infrastrukturbereiche oder Wirtschaftszweige sollen nach Auskunft\nder Bundesregierung in den einzelnen Compact-Ländern konkret kommer­\nzialisiert bzw. privatisiert werden (bitte für einzelne Länder getrennt anfüh­\nren)?",
+            "question_id": "q7"
+          },
+          "response": {
+            "text": "Zu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+            "answer_id": "a7"
+          }
+        },
+        {
+          "iid": "q8-a7",
+          "title": "8.\nWelche Streitschlichtungsverfahren für Investoren sind nach Informationen\nder Bundesregierung für die einzelnen Compact-Länder angedacht bzw.\nwerden bereits etabliert?",
+          "text": "8.\nWelche Streitschlichtungsverfahren für Investoren sind nach Informationen\nder Bundesregierung für die einzelnen Compact-Länder angedacht bzw.\nwerden bereits etabliert?\n\nZu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 4,
+            "answer_page": 5
+          },
+          "question": {
+            "text": "8.\nWelche Streitschlichtungsverfahren für Investoren sind nach Informationen\nder Bundesregierung für die einzelnen Compact-Länder angedacht bzw.\nwerden bereits etabliert?",
+            "question_id": "q8"
+          },
+          "response": {
+            "text": "Zu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+            "answer_id": "a7"
+          }
+        },
+        {
+          "iid": "q9-a7",
+          "title": "9.\nInwiefern sind nach Auskunft der Bundesregierung im Rahmen der CwA-\nInitiative Steuererleichterungen für Investoren vorgesehen bzw. möglich? Falls dieses Instrument möglich ist, wie ist dieses Instrument mit dem Ziel\nin Einklang zu bringen, das Steueraufkommen in den Compact-Ländern zu\nerhöhen?",
+          "text": "9.\nInwiefern sind nach Auskunft der Bundesregierung im Rahmen der CwA-\nInitiative Steuererleichterungen für Investoren vorgesehen bzw. möglich? Falls dieses Instrument möglich ist, wie ist dieses Instrument mit dem Ziel\nin Einklang zu bringen, das Steueraufkommen in den Compact-Ländern zu\nerhöhen?\n\nZu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 4,
+            "answer_page": 5
+          },
+          "question": {
+            "text": "9.\nInwiefern sind nach Auskunft der Bundesregierung im Rahmen der CwA-\nInitiative Steuererleichterungen für Investoren vorgesehen bzw. möglich? Falls dieses Instrument möglich ist, wie ist dieses Instrument mit dem Ziel\nin Einklang zu bringen, das Steueraufkommen in den Compact-Ländern zu\nerhöhen?",
+            "question_id": "q9"
+          },
+          "response": {
+            "text": "Zu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+            "answer_id": "a7"
+          }
+        },
+        {
+          "iid": "q10-a7",
+          "title": "10.\nInwiefern ist nach Informationen der Bundesregierung im Rahmen der CwA-\nInitiative bzw. im Rahmen der dadurch angestoßenen Investitionen die Ein­\nhaltung der Freiwilligen Leitlinien zu Landnutzungsrechten vorgesehen? Durch wen soll deren Einhaltung gegebenenfalls überwacht werden?",
+          "text": "10.\nInwiefern ist nach Informationen der Bundesregierung im Rahmen der CwA-\nInitiative bzw. im Rahmen der dadurch angestoßenen Investitionen die Ein­\nhaltung der Freiwilligen Leitlinien zu Landnutzungsrechten vorgesehen? Durch wen soll deren Einhaltung gegebenenfalls überwacht werden?\n\nZu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 4,
+            "answer_page": 5
+          },
+          "question": {
+            "text": "10.\nInwiefern ist nach Informationen der Bundesregierung im Rahmen der CwA-\nInitiative bzw. im Rahmen der dadurch angestoßenen Investitionen die Ein­\nhaltung der Freiwilligen Leitlinien zu Landnutzungsrechten vorgesehen? Durch wen soll deren Einhaltung gegebenenfalls überwacht werden?",
+            "question_id": "q10"
+          },
+          "response": {
+            "text": "Zu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+            "answer_id": "a7"
+          }
+        },
+        {
+          "iid": "q11-a7",
+          "title": "11.\nInwiefern wird nach Informationen der Bundesregierung bei der im Rah­\nmend der CwA-Initiative geschaffenen Arbeitsplätze die Einhaltung von\nStandards bezüglich Arbeitsrechten und Entlohnung überwacht (bitte auch\nangeben, um welche Standards es sich gegebenenfalls handelt und wer für\ndie Überwachung zuständig ist)?",
+          "text": "11.\nInwiefern wird nach Informationen der Bundesregierung bei der im Rah­\nmend der CwA-Initiative geschaffenen Arbeitsplätze die Einhaltung von\nStandards bezüglich Arbeitsrechten und Entlohnung überwacht (bitte auch\nangeben, um welche Standards es sich gegebenenfalls handelt und wer für\ndie Überwachung zuständig ist)?\n\nZu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 5,
+            "answer_page": 5
+          },
+          "question": {
+            "text": "11.\nInwiefern wird nach Informationen der Bundesregierung bei der im Rah­\nmend der CwA-Initiative geschaffenen Arbeitsplätze die Einhaltung von\nStandards bezüglich Arbeitsrechten und Entlohnung überwacht (bitte auch\nangeben, um welche Standards es sich gegebenenfalls handelt und wer für\ndie Überwachung zuständig ist)?",
+            "question_id": "q11"
+          },
+          "response": {
+            "text": "Zu den Einzelheiten der Maßnahmenkataloge wird auf deren Veröffentlichung\nauf der Website des CWA (www.compactwithafrica.org) verwiesen. Zu den Fra­\ngen 8, 10 und 11 wird ergänzend auf die Antwort zu Frage 22 verwiesen.",
+            "answer_id": "a7"
+          }
+        },
+        {
+          "iid": "q12-a12",
+          "title": "12.\nWie wird der Grundsatz „Fördern und Fordern“ in den Reformpartnerschaf­\nten unter Beteiligung der Bundesregierung konkret umgesetzt? Welche Reformschritte wurden mit Tunesien, Ghana und der Elfenbeinküste\nbisher vereinbart, und wie wird die Umsetzung dieser Reformschritte über­\nwacht?",
+          "text": "12.\nWie wird der Grundsatz „Fördern und Fordern“ in den Reformpartnerschaf­\nten unter Beteiligung der Bundesregierung konkret umgesetzt? Welche Reformschritte wurden mit Tunesien, Ghana und der Elfenbeinküste\nbisher vereinbart, und wie wird die Umsetzung dieser Reformschritte über­\nwacht?\n\nDie Bundesregierung hat sich mit den Regierungen von Tunesien, Ghana und\nCôte d’Ivoire darauf verständigt, dass die Reformpartnerschaften auf gegenseiti­\ngen Verpflichtungen aufbauen sollen. Während die Regierungen der drei Länder\nihre Bereitschaft erklärt haben, Reforminitiativen zur Umsetzung der im Rahmen\nder G20-Investment-Compacts zu vereinbarenden Ziele zu ergreifen und umzu­\nsetzen, will das BMZ die Umsetzung dieser Reformen durch Maßnahmen der\nstaatlichen Technischen und Finanziellen Zusammenarbeit unterstützen und flan­\nkieren. Tunesien Die Reformpartnerschaft mit Tunesien setzt ihren Fokus auf den Finanz- und\nBankensektor. Zur Verbesserung der Rahmenbedingungen für Investitionen wer­\nden Reformschritte in diesem Sektor von der tunesischen Regierung gefordert\nund, sofern die ersten bereits vereinbarten Reformschritte erfüllt werden, der Fi­\nnanz- und Bankensektor durch das BMZ unterstützt. Die ersten bereits vereinbar­\nten Reformschritte lauten: Verabschiedung eines neuen Haushaltsgesetzes, Er­\nnennung eines Generaldirektors sowie einer Aufsichtskommission des Einlagen­\nsicherungsfonds, Verabschiedung des Rahmengesetzes über die verbesserte Aus­\nkunft über Kreditwürdigkeit (Schaffung eines Kreditauskunftsbüros vergleichbar\nder „Schufa“) sowie Verabschiedung des Erlasses bezüglich Zusammensetzung\nund Arbeitsweise der Beobachtungsstelle für finanzielle Inklusion. Die mittel- und längerfristigen Reformen, deren erfolgreiche Umsetzung Voraus­\nsetzung für künftige Förderungen sind, werden in den kommenden Monaten mit\nder tunesischen Seite ausgehandelt und festgeschrieben. Hinsichtlich von Koor­\ndinierung und Monitoring wird auf die Antwort zu Frage 6 verwiesen. Ghana In Ghana soll sich die Unterstützung prioritär auf den Sektor erneuerbare Ener­\ngien und Energieeffizienz beziehen und durch Maßnahmen zur beruflichen Bil­\ndung in diesem Bereich flankiert werden. Zudem soll der Finanzsektor unterstützt\nwerden. Die jeweiligen Beiträge sollen an Reformfortschritte in den genannten\nSektoren gekoppelt werden: Dazu zählen insbesondere die Verbesserung des In­\nvestitionsklimas, die Förderung des Wettbewerbs im Bereich der Stromerzeu­\ngung sowie die Steigerung des Anteils erneuerbarer Energien am Energiemix. Beide Seiten streben an, gemeinsam für diese Bereiche entsprechende Kriterien\nfestzulegen, die es ihnen erlauben sollen, die Umsetzung der vereinbarten Re­\nformschritte dann gemeinsam zu überprüfen. Die Vereinbarung von Kriterien,\nvon Maßnahmen und geeigneten Instrumenten wird in den nächsten Monaten ge­\nmeinsam mit der Regierung der Republik Ghana erfolgen. Hinsichtlich Koordi­\nnierung und Monitoring wird auf die Antwort zu Frage 6 verwiesen. Côte d’Ivoire Die Reformpartnerschaft mit Côte d‘Ivoire soll sich ebenfalls auf den Sektor er­\nneuerbare Energien und Energieeffizienz konzentrieren. Private Investitionen in\ndiesen Sektor sollen erhöht werden, um den Anteil erneuerbarer Energien an der\ngesamten Stromproduktion zu steigern sowie die gesamte Stromerzeugungskapa­\nzität des Landes zu erhöhen. Flankiert wird die finanzielle Zusammenarbeit durch\nden Aufbau von Strukturen beruflicher Bildung im genannten Sektor. Bei der Umsetzung des Prinzips „Fördern und Fordern“ wird es daher um Refor­\nmen gehen, die eine Erhöhung des Anteils erneuerbarer Energien und Investitio­\nnen privater Unternehmen ermöglichen. Beide Seiten werden sich auf Kriterien\nund das Verfahren für die gemeinsame Nachverfolgung einigen. Die konkreten\nReformen und Kriterien werden noch mit der ivorischen Regierung verhandelt.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 5,
+            "answer_page": 5
+          },
+          "question": {
+            "text": "12.\nWie wird der Grundsatz „Fördern und Fordern“ in den Reformpartnerschaf­\nten unter Beteiligung der Bundesregierung konkret umgesetzt? Welche Reformschritte wurden mit Tunesien, Ghana und der Elfenbeinküste\nbisher vereinbart, und wie wird die Umsetzung dieser Reformschritte über­\nwacht?",
+            "question_id": "q12"
+          },
+          "response": {
+            "text": "Die Bundesregierung hat sich mit den Regierungen von Tunesien, Ghana und\nCôte d’Ivoire darauf verständigt, dass die Reformpartnerschaften auf gegenseiti­\ngen Verpflichtungen aufbauen sollen. Während die Regierungen der drei Länder\nihre Bereitschaft erklärt haben, Reforminitiativen zur Umsetzung der im Rahmen\nder G20-Investment-Compacts zu vereinbarenden Ziele zu ergreifen und umzu­\nsetzen, will das BMZ die Umsetzung dieser Reformen durch Maßnahmen der\nstaatlichen Technischen und Finanziellen Zusammenarbeit unterstützen und flan­\nkieren. Tunesien Die Reformpartnerschaft mit Tunesien setzt ihren Fokus auf den Finanz- und\nBankensektor. Zur Verbesserung der Rahmenbedingungen für Investitionen wer­\nden Reformschritte in diesem Sektor von der tunesischen Regierung gefordert\nund, sofern die ersten bereits vereinbarten Reformschritte erfüllt werden, der Fi­\nnanz- und Bankensektor durch das BMZ unterstützt. Die ersten bereits vereinbar­\nten Reformschritte lauten: Verabschiedung eines neuen Haushaltsgesetzes, Er­\nnennung eines Generaldirektors sowie einer Aufsichtskommission des Einlagen­\nsicherungsfonds, Verabschiedung des Rahmengesetzes über die verbesserte Aus­\nkunft über Kreditwürdigkeit (Schaffung eines Kreditauskunftsbüros vergleichbar\nder „Schufa“) sowie Verabschiedung des Erlasses bezüglich Zusammensetzung\nund Arbeitsweise der Beobachtungsstelle für finanzielle Inklusion. Die mittel- und längerfristigen Reformen, deren erfolgreiche Umsetzung Voraus­\nsetzung für künftige Förderungen sind, werden in den kommenden Monaten mit\nder tunesischen Seite ausgehandelt und festgeschrieben. Hinsichtlich von Koor­\ndinierung und Monitoring wird auf die Antwort zu Frage 6 verwiesen. Ghana In Ghana soll sich die Unterstützung prioritär auf den Sektor erneuerbare Ener­\ngien und Energieeffizienz beziehen und durch Maßnahmen zur beruflichen Bil­\ndung in diesem Bereich flankiert werden. Zudem soll der Finanzsektor unterstützt\nwerden. Die jeweiligen Beiträge sollen an Reformfortschritte in den genannten\nSektoren gekoppelt werden: Dazu zählen insbesondere die Verbesserung des In­\nvestitionsklimas, die Förderung des Wettbewerbs im Bereich der Stromerzeu­\ngung sowie die Steigerung des Anteils erneuerbarer Energien am Energiemix. Beide Seiten streben an, gemeinsam für diese Bereiche entsprechende Kriterien\nfestzulegen, die es ihnen erlauben sollen, die Umsetzung der vereinbarten Re­\nformschritte dann gemeinsam zu überprüfen. Die Vereinbarung von Kriterien,\nvon Maßnahmen und geeigneten Instrumenten wird in den nächsten Monaten ge­\nmeinsam mit der Regierung der Republik Ghana erfolgen. Hinsichtlich Koordi­\nnierung und Monitoring wird auf die Antwort zu Frage 6 verwiesen. Côte d’Ivoire Die Reformpartnerschaft mit Côte d‘Ivoire soll sich ebenfalls auf den Sektor er­\nneuerbare Energien und Energieeffizienz konzentrieren. Private Investitionen in\ndiesen Sektor sollen erhöht werden, um den Anteil erneuerbarer Energien an der\ngesamten Stromproduktion zu steigern sowie die gesamte Stromerzeugungskapa­\nzität des Landes zu erhöhen. Flankiert wird die finanzielle Zusammenarbeit durch\nden Aufbau von Strukturen beruflicher Bildung im genannten Sektor. Bei der Umsetzung des Prinzips „Fördern und Fordern“ wird es daher um Refor­\nmen gehen, die eine Erhöhung des Anteils erneuerbarer Energien und Investitio­\nnen privater Unternehmen ermöglichen. Beide Seiten werden sich auf Kriterien\nund das Verfahren für die gemeinsame Nachverfolgung einigen. Die konkreten\nReformen und Kriterien werden noch mit der ivorischen Regierung verhandelt.",
+            "answer_id": "a12"
+          }
+        },
+        {
+          "iid": "q13-a13",
+          "title": "13.\nWie wollen Bundesregierung sowie die Regierung der Elfenbeinküste pri­\nvate Investitionen im Infrastrukturbereich vorantreiben? a) Welche Infrastrukturbereiche sollen hierbei mit einbezogen werden, bzw. gibt es Bereiche, die von dieser Initiative explizit ausgenommen werden? b) Worauf beziehen sich die 62 Prozent, die nach Auskunft der Bundesre­ gierung im Nationalen Entwicklungsplan der Elfenbeinküste für Privatin­\nvestitionen vorgesehen sind?",
+          "text": "13.\nWie wollen Bundesregierung sowie die Regierung der Elfenbeinküste pri­\nvate Investitionen im Infrastrukturbereich vorantreiben? a) Welche Infrastrukturbereiche sollen hierbei mit einbezogen werden, bzw. gibt es Bereiche, die von dieser Initiative explizit ausgenommen werden? b) Worauf beziehen sich die 62 Prozent, die nach Auskunft der Bundesre­ gierung im Nationalen Entwicklungsplan der Elfenbeinküste für Privatin­\nvestitionen vorgesehen sind?\n\nIm nationalen Entwicklungsplan 2016-2020 gibt Côte d’Ivoire als Ziel vor, dass\n62 Prozent aller geplanten Investitionen aus dem Privatsektor kommen sollen.\nDies gilt über alle Infrastrukturbereiche hinweg. Côte d‘Ivoire strebt an, das allgemeine Investitionsklima für private Unternehmen\nim Land zu verbessern. Dazu gehören eine stabilitätsorientierte makroökonomi­\nsche und fiskalische Steuerung, die Förderung von Public-private-Partnerships\n(PPP) sowie konkrete Maßnahmen zur Verbesserung des Investitionsklimas, bei­\nspielsweise der bessere Zugang zu Handelsgerichten und ein Onlineportal für In­\nformationen und Registrierung von Investoren. Die Bundesregierung wird im Rahmen der Reformpartnerschaft den Fokus auf\nden Sektor erneuerbare Energien und Energieeffizienz legen. Es soll ivorischen\nund ausländischen Unternehmen z. B. durch Risikominderung, Verbesserung der\nNetzinfrastruktur und berufliche Ausbildung ermöglicht werden, die Produktion\nvon Strom aus erneuerbaren Ressourcen zu erhöhen. Das schließt die dezentrale\nVersorgung mit ein.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 6,
+            "answer_page": 6
+          },
+          "question": {
+            "text": "13.\nWie wollen Bundesregierung sowie die Regierung der Elfenbeinküste pri­\nvate Investitionen im Infrastrukturbereich vorantreiben? a) Welche Infrastrukturbereiche sollen hierbei mit einbezogen werden, bzw. gibt es Bereiche, die von dieser Initiative explizit ausgenommen werden? b) Worauf beziehen sich die 62 Prozent, die nach Auskunft der Bundesre­ gierung im Nationalen Entwicklungsplan der Elfenbeinküste für Privatin­\nvestitionen vorgesehen sind?",
+            "question_id": "q13"
+          },
+          "response": {
+            "text": "Im nationalen Entwicklungsplan 2016-2020 gibt Côte d’Ivoire als Ziel vor, dass\n62 Prozent aller geplanten Investitionen aus dem Privatsektor kommen sollen.\nDies gilt über alle Infrastrukturbereiche hinweg. Côte d‘Ivoire strebt an, das allgemeine Investitionsklima für private Unternehmen\nim Land zu verbessern. Dazu gehören eine stabilitätsorientierte makroökonomi­\nsche und fiskalische Steuerung, die Förderung von Public-private-Partnerships\n(PPP) sowie konkrete Maßnahmen zur Verbesserung des Investitionsklimas, bei­\nspielsweise der bessere Zugang zu Handelsgerichten und ein Onlineportal für In­\nformationen und Registrierung von Investoren. Die Bundesregierung wird im Rahmen der Reformpartnerschaft den Fokus auf\nden Sektor erneuerbare Energien und Energieeffizienz legen. Es soll ivorischen\nund ausländischen Unternehmen z. B. durch Risikominderung, Verbesserung der\nNetzinfrastruktur und berufliche Ausbildung ermöglicht werden, die Produktion\nvon Strom aus erneuerbaren Ressourcen zu erhöhen. Das schließt die dezentrale\nVersorgung mit ein.",
+            "answer_id": "a13"
+          }
+        },
+        {
+          "iid": "q14-a14",
+          "title": "14.\nDurch welche konkreten Maßnahmen möchte Ghana nach Auskunft der\nBundesregierung das Investitionsklima verbessern und im Bereich der er­\nneuerbaren Energien/Energieeffizienz den Wettbewerb bei öffentlichen\nAusschreibungen stärken? Welche Vereinbarungen wurden in diesem Bereich mit der Bundesregierung\nkonkret getroffen oder sollen in naher Zukunft abgeschlossen werden?",
+          "text": "14.\nDurch welche konkreten Maßnahmen möchte Ghana nach Auskunft der\nBundesregierung das Investitionsklima verbessern und im Bereich der er­\nneuerbaren Energien/Energieeffizienz den Wettbewerb bei öffentlichen\nAusschreibungen stärken? Welche Vereinbarungen wurden in diesem Bereich mit der Bundesregierung\nkonkret getroffen oder sollen in naher Zukunft abgeschlossen werden?\n\nNach Informationen der Bundesregierung möchte Ghana zur Verbesserung des\nInvestitionsklimas folgende konkrete Maßnahmen ergreifen:\nSicherstellung makroökonomischer Stabilität und Schuldentragfähigkeit, Steige­\nrung von Eigeneinnahmen insbesondere durch Vereinfachung der Steuerverwal­\ntung, gutes Management öffentlicher Investitionen, Steigerung der Leistungsfä­\nhigkeit öffentlicher Energieversorger, Schaffung verlässlicher Regulierungen und\nInstitutionen für die Privatwirtschaft, Standardisierung von Projekt- und Finan­\nzierungsverträgen der öffentlichen Hand mit dem Privatsektor, Nutzung effizien­\nter Risikominderungsinstrumente und Entwicklung des lokalen Schuldenmarkts. Es liegen der Bundesregierung noch keine Informationen dazu vor, durch welche\nkonkreten Maßnahmen Ghana im Bereich erneuerbare Energien und Energieeffi­\nzienz den Wettbewerb bei öffentlichen Ausschreibungen zu stärken beabsichtigt.\nDie Vereinbarung von Reformschritten in diesem Bereich sowie von Maßnahmen\nzur Unterstützung dieser Reformschritte wird gemeinsam mit der Regierung der\nRepublik Ghana in den nächsten Monaten erfolgen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 7,
+            "answer_page": 7
+          },
+          "question": {
+            "text": "14.\nDurch welche konkreten Maßnahmen möchte Ghana nach Auskunft der\nBundesregierung das Investitionsklima verbessern und im Bereich der er­\nneuerbaren Energien/Energieeffizienz den Wettbewerb bei öffentlichen\nAusschreibungen stärken? Welche Vereinbarungen wurden in diesem Bereich mit der Bundesregierung\nkonkret getroffen oder sollen in naher Zukunft abgeschlossen werden?",
+            "question_id": "q14"
+          },
+          "response": {
+            "text": "Nach Informationen der Bundesregierung möchte Ghana zur Verbesserung des\nInvestitionsklimas folgende konkrete Maßnahmen ergreifen:\nSicherstellung makroökonomischer Stabilität und Schuldentragfähigkeit, Steige­\nrung von Eigeneinnahmen insbesondere durch Vereinfachung der Steuerverwal­\ntung, gutes Management öffentlicher Investitionen, Steigerung der Leistungsfä­\nhigkeit öffentlicher Energieversorger, Schaffung verlässlicher Regulierungen und\nInstitutionen für die Privatwirtschaft, Standardisierung von Projekt- und Finan­\nzierungsverträgen der öffentlichen Hand mit dem Privatsektor, Nutzung effizien­\nter Risikominderungsinstrumente und Entwicklung des lokalen Schuldenmarkts. Es liegen der Bundesregierung noch keine Informationen dazu vor, durch welche\nkonkreten Maßnahmen Ghana im Bereich erneuerbare Energien und Energieeffi­\nzienz den Wettbewerb bei öffentlichen Ausschreibungen zu stärken beabsichtigt.\nDie Vereinbarung von Reformschritten in diesem Bereich sowie von Maßnahmen\nzur Unterstützung dieser Reformschritte wird gemeinsam mit der Regierung der\nRepublik Ghana in den nächsten Monaten erfolgen.",
+            "answer_id": "a14"
+          }
+        },
+        {
+          "iid": "q15-a15",
+          "title": "15.\nWelche weiteren bilateralen Reformpartnerschaften zwischen anderen G20-\nStaaten außer Deutschland und afrikanischen Ländern sind nach Informatio­\nnen der Bundesregierung geplant oder bereits abgeschlossen, und was sind\ndie inhaltlichen Schwerpunkte dieser Partnerschaften?",
+          "text": "15.\nWelche weiteren bilateralen Reformpartnerschaften zwischen anderen G20-\nStaaten außer Deutschland und afrikanischen Ländern sind nach Informatio­\nnen der Bundesregierung geplant oder bereits abgeschlossen, und was sind\ndie inhaltlichen Schwerpunkte dieser Partnerschaften?\n\nMehrere G20-Länder und andere Partner haben die Absicht erklärt, die an der\nG20-CWA-Initiative teilnehmenden Länder mit eigenen bilateralen Beiträgen bei\nder Erreichung der jeweils in diesem Rahmen gestreckten Ziele zu unterstützen.\nDie Kommunikation der Einzelbeiträge obliegt den zuständigen Stellen der\nG20-Länder und anderer Partner.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 7,
+            "answer_page": 7
+          },
+          "question": {
+            "text": "15.\nWelche weiteren bilateralen Reformpartnerschaften zwischen anderen G20-\nStaaten außer Deutschland und afrikanischen Ländern sind nach Informatio­\nnen der Bundesregierung geplant oder bereits abgeschlossen, und was sind\ndie inhaltlichen Schwerpunkte dieser Partnerschaften?",
+            "question_id": "q15"
+          },
+          "response": {
+            "text": "Mehrere G20-Länder und andere Partner haben die Absicht erklärt, die an der\nG20-CWA-Initiative teilnehmenden Länder mit eigenen bilateralen Beiträgen bei\nder Erreichung der jeweils in diesem Rahmen gestreckten Ziele zu unterstützen.\nDie Kommunikation der Einzelbeiträge obliegt den zuständigen Stellen der\nG20-Länder und anderer Partner.",
+            "answer_id": "a15"
+          }
+        },
+        {
+          "iid": "q16-a16",
+          "title": "16.\nInwiefern gibt es nach Informationen der Bundesregierung bisher Investiti­\nonsabsichten von Unternehmen als Folge der CwA-Initiative (bitte um Auf­\nlistung der geplanten Investitionen)?",
+          "text": "16.\nInwiefern gibt es nach Informationen der Bundesregierung bisher Investiti­\nonsabsichten von Unternehmen als Folge der CwA-Initiative (bitte um Auf­\nlistung der geplanten Investitionen)?\n\nAufgrund des frühen Stadiums der Initiative liegen der Bundesregierung hierzu\nnoch keine Informationen vor.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 7,
+            "answer_page": 7
+          },
+          "question": {
+            "text": "16.\nInwiefern gibt es nach Informationen der Bundesregierung bisher Investiti­\nonsabsichten von Unternehmen als Folge der CwA-Initiative (bitte um Auf­\nlistung der geplanten Investitionen)?",
+            "question_id": "q16"
+          },
+          "response": {
+            "text": "Aufgrund des frühen Stadiums der Initiative liegen der Bundesregierung hierzu\nnoch keine Informationen vor.",
+            "answer_id": "a16"
+          }
+        },
+        {
+          "iid": "q17-a17",
+          "title": "17.\nWelche konkreten Projekte im Rahmen von Compact-Partnerschaften, die in\nden Prospekten der Compact-Länder auf der Homepage www.compactwith\nafrica.org/content/compactwithafrica/home.html angeführt werden, sind in­\nzwischen vorangekommen, und in welchem Stadium befinden sie sich (bitte\nfür einzelne Ländern anführen inklusive der beteiligten Unternehmen)?",
+          "text": "17.\nWelche konkreten Projekte im Rahmen von Compact-Partnerschaften, die in\nden Prospekten der Compact-Länder auf der Homepage www.compactwith\nafrica.org/content/compactwithafrica/home.html angeführt werden, sind in­\nzwischen vorangekommen, und in welchem Stadium befinden sie sich (bitte\nfür einzelne Ländern anführen inklusive der beteiligten Unternehmen)?\n\nAuf die Antwort zu Frage 5 wird verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 7,
+            "answer_page": 7
+          },
+          "question": {
+            "text": "17.\nWelche konkreten Projekte im Rahmen von Compact-Partnerschaften, die in\nden Prospekten der Compact-Länder auf der Homepage www.compactwith\nafrica.org/content/compactwithafrica/home.html angeführt werden, sind in­\nzwischen vorangekommen, und in welchem Stadium befinden sie sich (bitte\nfür einzelne Ländern anführen inklusive der beteiligten Unternehmen)?",
+            "question_id": "q17"
+          },
+          "response": {
+            "text": "Auf die Antwort zu Frage 5 wird verwiesen.",
+            "answer_id": "a17"
+          }
+        },
+        {
+          "iid": "q18-a18",
+          "title": "18.\nInwiefern ist im Rahmen der CwA-Initiative nach Kenntnis der Bundesre­\ngierung die Einrichtung von Sonderwirtschaftszonen in den Compact-Län­\ndern geplant? Wenn ja, in welchen, und für welche Wirtschaftssektoren?",
+          "text": "18.\nInwiefern ist im Rahmen der CwA-Initiative nach Kenntnis der Bundesre­\ngierung die Einrichtung von Sonderwirtschaftszonen in den Compact-Län­\ndern geplant? Wenn ja, in welchen, und für welche Wirtschaftssektoren?\n\nAuf die Antwort zu den Fragen 7 bis 11 wird verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 8,
+            "answer_page": 8
+          },
+          "question": {
+            "text": "18.\nInwiefern ist im Rahmen der CwA-Initiative nach Kenntnis der Bundesre­\ngierung die Einrichtung von Sonderwirtschaftszonen in den Compact-Län­\ndern geplant? Wenn ja, in welchen, und für welche Wirtschaftssektoren?",
+            "question_id": "q18"
+          },
+          "response": {
+            "text": "Auf die Antwort zu den Fragen 7 bis 11 wird verwiesen.",
+            "answer_id": "a18"
+          }
+        },
+        {
+          "iid": "q19-a19",
+          "title": "19.\nInwiefern unterstützt die Bundesregierung – beispielsweise im Rahmen der\nCwA-Initiative, oder in der Arbeit ihrer Entwicklungsfinanzierer wie KfW\nund DEG – Deutsche Investitions- und Entwicklungsgesellschaft mbH – die\nAnwendung der neuen Richtlinien der Weltbank für PPP-Verträge?",
+          "text": "19.\nInwiefern unterstützt die Bundesregierung – beispielsweise im Rahmen der\nCwA-Initiative, oder in der Arbeit ihrer Entwicklungsfinanzierer wie KfW\nund DEG – Deutsche Investitions- und Entwicklungsgesellschaft mbH – die\nAnwendung der neuen Richtlinien der Weltbank für PPP-Verträge?\n\nDer Bericht der Weltbank (WB) „Guidance on PPP Contractual Provisions“ ist\nein vom Stab der Weltbank erstellter Bericht mit nicht bindenden Empfehlungen\nzur inhaltlichen Ausgestaltung von PPP-Verträgen Für PPP gibt es keine interna­\ntional standardisierte Definition. Die Frage wird hier so verstanden, dass sie sich\nauf PPP-Verträge im Sinne von Allianzen zwischen der öffentlichen Entwick­\nlungszusammenarbeit und der privaten Wirtschaft zu beiderseitigem Nutzen be­\nzieht. Sämtliche Antworten beziehen sich daher auf PPP nach diesem Verständ­\nnis. Der Inhalt des Berichts ist auch bei der Ausgestaltung von PPP-Transaktionen\nmit Beteiligung der Weltbank nicht verpflichtend. Er ist ferner nicht von den An­\nteilseignern verabschiedet worden, es gab lediglich eine öffentliche Konsultati­\nonsphase. Im Übrigen werden die Empfehlungen laufend weiterentwickelt. Durch ihren allgemeinen und empfehlenden Charakter stellen die WB-Leitlinien\neinen wichtigen und nützlichen Orientierungsrahmen dar. Ob diese Regeln ganz\noder teilweise übernommen werden können und inwiefern sie um weitere Be-\nstimmungen ergänzt werden müssen, ist stets eine Frage des Einzelfalls. Das gilt\nsowohl im CWA-Kontext als auch in der Arbeit der Entwicklungsfinanzierer\nDEG – Deutsche Investitions- und Entwicklungsgesellschaft mbH und Kreditan­\nstalt für Wiederaufbau (KfW). Dort finden die WB-Leitlinien ebenfalls als wich­\ntiger Bezugspunkt Berücksichtigung: a. Die KfW trägt zur kontextspezifischen Gestaltung von Details der individu­ ellen PPP-Verträge bei. Die Allokation oder Zuordnung von Risiken wird\nimmer vor dem Hintergrund des Risiko-Rendite-Profils gesehen. Es wird ver­\nsucht, die entsprechenden Risiken bei der Partei zu allozieren, die sie am bes­\nten und effizientesten managen kann. KfW und DEG prüfen Engagements in\njedem Einzelfall und ersetzen ihre Prüfung nicht durch den Verweis auf Welt­\nbankstandards. b. Die DEG als Tochtergesellschaft der KfW finanziert stets nur die unterneh­ merische Seite. Üblicherweise gestaltet sie also nicht die PPP im Partnerland\nselbst. Bei ihren Finanzierungen prüft die DEG regulär nach internationalen\nStandards, insbesondere den International Finance Corporation (IFC) Perfor­\nmance-Standards, zu denen auch eine Überprüfung des rechtlichen Rahmens\ngehört. Das BMZ ist ferner einer der Geber für die Public Private Infrastructure Advisory\nFacility (PPIAF), einem Treuhandfonds verschiedener Geber unter dem Manage­\nment der Weltbank. PPIAF stellt Zuschüsse für die Gestaltung von PPP-Rahmen­\nwerken im Infrastrukturbereich in Entwicklungsländern zur Verfügung. PPIAF\nunterstützt damit in einigen Ländern die oben beschriebene Übersetzungsleis­\ntung.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 8,
+            "answer_page": 8
+          },
+          "question": {
+            "text": "19.\nInwiefern unterstützt die Bundesregierung – beispielsweise im Rahmen der\nCwA-Initiative, oder in der Arbeit ihrer Entwicklungsfinanzierer wie KfW\nund DEG – Deutsche Investitions- und Entwicklungsgesellschaft mbH – die\nAnwendung der neuen Richtlinien der Weltbank für PPP-Verträge?",
+            "question_id": "q19"
+          },
+          "response": {
+            "text": "Der Bericht der Weltbank (WB) „Guidance on PPP Contractual Provisions“ ist\nein vom Stab der Weltbank erstellter Bericht mit nicht bindenden Empfehlungen\nzur inhaltlichen Ausgestaltung von PPP-Verträgen Für PPP gibt es keine interna­\ntional standardisierte Definition. Die Frage wird hier so verstanden, dass sie sich\nauf PPP-Verträge im Sinne von Allianzen zwischen der öffentlichen Entwick­\nlungszusammenarbeit und der privaten Wirtschaft zu beiderseitigem Nutzen be­\nzieht. Sämtliche Antworten beziehen sich daher auf PPP nach diesem Verständ­\nnis. Der Inhalt des Berichts ist auch bei der Ausgestaltung von PPP-Transaktionen\nmit Beteiligung der Weltbank nicht verpflichtend. Er ist ferner nicht von den An­\nteilseignern verabschiedet worden, es gab lediglich eine öffentliche Konsultati­\nonsphase. Im Übrigen werden die Empfehlungen laufend weiterentwickelt. Durch ihren allgemeinen und empfehlenden Charakter stellen die WB-Leitlinien\neinen wichtigen und nützlichen Orientierungsrahmen dar. Ob diese Regeln ganz\noder teilweise übernommen werden können und inwiefern sie um weitere Be-\nstimmungen ergänzt werden müssen, ist stets eine Frage des Einzelfalls. Das gilt\nsowohl im CWA-Kontext als auch in der Arbeit der Entwicklungsfinanzierer\nDEG – Deutsche Investitions- und Entwicklungsgesellschaft mbH und Kreditan­\nstalt für Wiederaufbau (KfW). Dort finden die WB-Leitlinien ebenfalls als wich­\ntiger Bezugspunkt Berücksichtigung: a. Die KfW trägt zur kontextspezifischen Gestaltung von Details der individu­ ellen PPP-Verträge bei. Die Allokation oder Zuordnung von Risiken wird\nimmer vor dem Hintergrund des Risiko-Rendite-Profils gesehen. Es wird ver­\nsucht, die entsprechenden Risiken bei der Partei zu allozieren, die sie am bes­\nten und effizientesten managen kann. KfW und DEG prüfen Engagements in\njedem Einzelfall und ersetzen ihre Prüfung nicht durch den Verweis auf Welt­\nbankstandards. b. Die DEG als Tochtergesellschaft der KfW finanziert stets nur die unterneh­ merische Seite. Üblicherweise gestaltet sie also nicht die PPP im Partnerland\nselbst. Bei ihren Finanzierungen prüft die DEG regulär nach internationalen\nStandards, insbesondere den International Finance Corporation (IFC) Perfor­\nmance-Standards, zu denen auch eine Überprüfung des rechtlichen Rahmens\ngehört. Das BMZ ist ferner einer der Geber für die Public Private Infrastructure Advisory\nFacility (PPIAF), einem Treuhandfonds verschiedener Geber unter dem Manage­\nment der Weltbank. PPIAF stellt Zuschüsse für die Gestaltung von PPP-Rahmen­\nwerken im Infrastrukturbereich in Entwicklungsländern zur Verfügung. PPIAF\nunterstützt damit in einigen Ländern die oben beschriebene Übersetzungsleis­\ntung.",
+            "answer_id": "a19"
+          }
+        },
+        {
+          "iid": "q20-a20",
+          "title": "20.\nWelche Konsequenzen zieht die Bundesregierung aus der Kritik der Rechts­\nanwaltskanzlei Foley Hoag, dass die Richtlinien die Interessen von öffentli­\ncher Hand und privaten Investoren nicht gleichrangig berücksichtigen?",
+          "text": "20.\nWelche Konsequenzen zieht die Bundesregierung aus der Kritik der Rechts­\nanwaltskanzlei Foley Hoag, dass die Richtlinien die Interessen von öffentli­\ncher Hand und privaten Investoren nicht gleichrangig berücksichtigen?\n\nAuf die Antworten zu den Fragen 21 bis 25 wird verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 9,
+            "answer_page": 9
+          },
+          "question": {
+            "text": "20.\nWelche Konsequenzen zieht die Bundesregierung aus der Kritik der Rechts­\nanwaltskanzlei Foley Hoag, dass die Richtlinien die Interessen von öffentli­\ncher Hand und privaten Investoren nicht gleichrangig berücksichtigen?",
+            "question_id": "q20"
+          },
+          "response": {
+            "text": "Auf die Antworten zu den Fragen 21 bis 25 wird verwiesen.",
+            "answer_id": "a20"
+          }
+        },
+        {
+          "iid": "q21-a21",
+          "title": "21.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Bürgerkriege nicht unbedingt als höhere Gewalt (force\nmajeure) betrachtet werden müssen sowie Vorkommnisse wie Kriege, Bür­\ngerkriege, Streiks, Terrorattacken oder Aufstände als schädigendes Regie­\nrungshandeln („material adverse government action“) qualifiziert werden\nkönnen?",
+          "text": "21.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Bürgerkriege nicht unbedingt als höhere Gewalt (force\nmajeure) betrachtet werden müssen sowie Vorkommnisse wie Kriege, Bür­\ngerkriege, Streiks, Terrorattacken oder Aufstände als schädigendes Regie­\nrungshandeln („material adverse government action“) qualifiziert werden\nkönnen?\n\nDie Bundesregierung orientiert ihr Handeln in Bezug auf Krisen und gewaltsame\nKonflikte nicht an den Kategorien „höhere Gewalt“ oder „schädigendes Regie­\nrungshandeln“. (Zum gesamtstrategischen Ansatz der Bundesregierung siehe die\nim Juni 2017 vom Kabinett verabschiedeten Leitlinien „Krisen verhindern, Kon­\nflikte bewältigen, Frieden fördern“ auf Bundestagsdrucksache 18/12813).",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 9,
+            "answer_page": 9
+          },
+          "question": {
+            "text": "21.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Bürgerkriege nicht unbedingt als höhere Gewalt (force\nmajeure) betrachtet werden müssen sowie Vorkommnisse wie Kriege, Bür­\ngerkriege, Streiks, Terrorattacken oder Aufstände als schädigendes Regie­\nrungshandeln („material adverse government action“) qualifiziert werden\nkönnen?",
+            "question_id": "q21"
+          },
+          "response": {
+            "text": "Die Bundesregierung orientiert ihr Handeln in Bezug auf Krisen und gewaltsame\nKonflikte nicht an den Kategorien „höhere Gewalt“ oder „schädigendes Regie­\nrungshandeln“. (Zum gesamtstrategischen Ansatz der Bundesregierung siehe die\nim Juni 2017 vom Kabinett verabschiedeten Leitlinien „Krisen verhindern, Kon­\nflikte bewältigen, Frieden fördern“ auf Bundestagsdrucksache 18/12813).",
+            "answer_id": "a21"
+          }
+        },
+        {
+          "iid": "q22-a22",
+          "title": "22.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Staaten keine gesetzlichen Maßnahmen, etwa zur z. B.\nzur Durchsetzung von Umwelt- und Klimaschutz, internationalen Men­\nschen- oder Arbeitsrechten, ergreifen dürfen, ohne Investoren für dadurch\nentstehende Gewinneinbußen zu entschädigen?",
+          "text": "22.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Staaten keine gesetzlichen Maßnahmen, etwa zur z. B.\nzur Durchsetzung von Umwelt- und Klimaschutz, internationalen Men­\nschen- oder Arbeitsrechten, ergreifen dürfen, ohne Investoren für dadurch\nentstehende Gewinneinbußen zu entschädigen?\n\nDie Bundesregierung setzt sich u. a. in der Entwicklungszusammenarbeit inter­\nnational für die Stärkung des Menschenrechtsschutzes, von Sozial- und Umwelt­\nstandards und den Klimaschutz ein. Sie wirkt auf die Herbeiführung nachhaltiger\nglobaler Lieferketten hin. Sie ist zudem der Auffassung, dass Staaten als Mitglie­\nder der internationalen Staatengemeinschaft gehalten sind, ihre internationalen\nVerpflichtungen im Bereich Umwelt- und Klimaschutz wie auch internationale\nMenschen- und Arbeitsrechte, die auf rechtlichen oder politischen Vereinbarun­\ngen der Staatengemeinschaft beruhen, umzusetzen. In den Richtlinien der Weltbank werden verschiedene Optionen zur Gestaltung\nvon PPP-Verträgen mit Blick auf Gesetzesänderungen dargelegt. Es obliegt den\njeweiligen Staaten, angemessene Regelungen im Interessensausgleich der Ver­\ntragsparteien zu fassen. Insbesondere auch national und international bestehende\nVorgaben zu staatlichen Schutzpflichten und zu unternehmerischen Sorgfalts­\npflichten – z. B. die Leitprinzipien für Wirtschaft und Menschenrechte der Ver­\neinten Nationen sowie die OECD-Leitsätze für multinationale Unternehmen –\nsind hierbei zu berücksichtigen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 9,
+            "answer_page": 9
+          },
+          "question": {
+            "text": "22.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Staaten keine gesetzlichen Maßnahmen, etwa zur z. B.\nzur Durchsetzung von Umwelt- und Klimaschutz, internationalen Men­\nschen- oder Arbeitsrechten, ergreifen dürfen, ohne Investoren für dadurch\nentstehende Gewinneinbußen zu entschädigen?",
+            "question_id": "q22"
+          },
+          "response": {
+            "text": "Die Bundesregierung setzt sich u. a. in der Entwicklungszusammenarbeit inter­\nnational für die Stärkung des Menschenrechtsschutzes, von Sozial- und Umwelt­\nstandards und den Klimaschutz ein. Sie wirkt auf die Herbeiführung nachhaltiger\nglobaler Lieferketten hin. Sie ist zudem der Auffassung, dass Staaten als Mitglie­\nder der internationalen Staatengemeinschaft gehalten sind, ihre internationalen\nVerpflichtungen im Bereich Umwelt- und Klimaschutz wie auch internationale\nMenschen- und Arbeitsrechte, die auf rechtlichen oder politischen Vereinbarun­\ngen der Staatengemeinschaft beruhen, umzusetzen. In den Richtlinien der Weltbank werden verschiedene Optionen zur Gestaltung\nvon PPP-Verträgen mit Blick auf Gesetzesänderungen dargelegt. Es obliegt den\njeweiligen Staaten, angemessene Regelungen im Interessensausgleich der Ver­\ntragsparteien zu fassen. Insbesondere auch national und international bestehende\nVorgaben zu staatlichen Schutzpflichten und zu unternehmerischen Sorgfalts­\npflichten – z. B. die Leitprinzipien für Wirtschaft und Menschenrechte der Ver­\neinten Nationen sowie die OECD-Leitsätze für multinationale Unternehmen –\nsind hierbei zu berücksichtigen.",
+            "answer_id": "a22"
+          }
+        },
+        {
+          "iid": "q23-a23",
+          "title": "23.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – PPP-Verträge sowie Projektinformationen wie Um­\nwelt- und Sozialrisikoprüfungen nicht veröffentlich werden müssen?",
+          "text": "23.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – PPP-Verträge sowie Projektinformationen wie Um­\nwelt- und Sozialrisikoprüfungen nicht veröffentlich werden müssen?\n\nIm Falle der Zusammenarbeit mit Entwicklungsländern und einer Refinanzierung\neines Staates zur Gründung einer PPP gelten die hohen Transparenzanforderun­\ngen, die eine Refinanzierung durch die KfW erfordert. Im Rahmen der vom BMZ\nüber seine Durchführungsorganisationen als öffentlicher Partner mit deutschen\nund/oder europäischen Unternehmen geschlossenen PPP-Programme werden\nProjektinformationen im Sinne der Transparenz grundsätzlich veröffentlicht.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 9,
+            "answer_page": 9
+          },
+          "question": {
+            "text": "23.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – PPP-Verträge sowie Projektinformationen wie Um­\nwelt- und Sozialrisikoprüfungen nicht veröffentlich werden müssen?",
+            "question_id": "q23"
+          },
+          "response": {
+            "text": "Im Falle der Zusammenarbeit mit Entwicklungsländern und einer Refinanzierung\neines Staates zur Gründung einer PPP gelten die hohen Transparenzanforderun­\ngen, die eine Refinanzierung durch die KfW erfordert. Im Rahmen der vom BMZ\nüber seine Durchführungsorganisationen als öffentlicher Partner mit deutschen\nund/oder europäischen Unternehmen geschlossenen PPP-Programme werden\nProjektinformationen im Sinne der Transparenz grundsätzlich veröffentlicht.",
+            "answer_id": "a23"
+          }
+        },
+        {
+          "iid": "q24-a24",
+          "title": "24.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – PPP-Verträge nicht auf Basis lokaler/nationaler Ge­\nsetzgebungen der betreffenden Projektländer abgeschlossen werden sollen?",
+          "text": "24.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – PPP-Verträge nicht auf Basis lokaler/nationaler Ge­\nsetzgebungen der betreffenden Projektländer abgeschlossen werden sollen?\n\nDie Fragen 24 und 25 werden gemeinsam beantwortet. Auf die Antwort zu Frage 19 wird verwiesen. Fragen der lokalen/nationalen Gesetzgebung bei der Vertragsgestaltung sowie die\nBeteiligung von Regierungen als Shareholder oder Partner an PPP-Verträgen sind\nkontextabhängig von Fall zu Fall zu überprüfen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 10,
+            "answer_page": 10
+          },
+          "question": {
+            "text": "24.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – PPP-Verträge nicht auf Basis lokaler/nationaler Ge­\nsetzgebungen der betreffenden Projektländer abgeschlossen werden sollen?",
+            "question_id": "q24"
+          },
+          "response": {
+            "text": "Die Fragen 24 und 25 werden gemeinsam beantwortet. Auf die Antwort zu Frage 19 wird verwiesen. Fragen der lokalen/nationalen Gesetzgebung bei der Vertragsgestaltung sowie die\nBeteiligung von Regierungen als Shareholder oder Partner an PPP-Verträgen sind\nkontextabhängig von Fall zu Fall zu überprüfen.",
+            "answer_id": "a24"
+          }
+        },
+        {
+          "iid": "q25-a24",
+          "title": "25.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Regierungen sich nicht als Shareholder oder Partner\nan PPP-Verträgen beteiligen sollen?",
+          "text": "25.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Regierungen sich nicht als Shareholder oder Partner\nan PPP-Verträgen beteiligen sollen?\n\nDie Fragen 24 und 25 werden gemeinsam beantwortet. Auf die Antwort zu Frage 19 wird verwiesen. Fragen der lokalen/nationalen Gesetzgebung bei der Vertragsgestaltung sowie die\nBeteiligung von Regierungen als Shareholder oder Partner an PPP-Verträgen sind\nkontextabhängig von Fall zu Fall zu überprüfen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 10,
+            "answer_page": 10
+          },
+          "question": {
+            "text": "25.\nInwiefern vertritt die Bundesregierung die Auffassung, dass – analog zu den\nWeltbankrichtlinien – Regierungen sich nicht als Shareholder oder Partner\nan PPP-Verträgen beteiligen sollen?",
+            "question_id": "q25"
+          },
+          "response": {
+            "text": "Die Fragen 24 und 25 werden gemeinsam beantwortet. Auf die Antwort zu Frage 19 wird verwiesen. Fragen der lokalen/nationalen Gesetzgebung bei der Vertragsgestaltung sowie die\nBeteiligung von Regierungen als Shareholder oder Partner an PPP-Verträgen sind\nkontextabhängig von Fall zu Fall zu überprüfen.",
+            "answer_id": "a24"
+          }
+        },
+        {
+          "iid": "q26-a26",
+          "title": "26.\nInwiefern verfolgen die Bundesregierung, andere G20-Staaten oder interna­\ntionale Finanzinstitutionen den Vorschlag der T20, in afrikanischen Ländern\nSonderwirtschaftszonen für Migranten und Flüchtlinge einzurichten?",
+          "text": "26.\nInwiefern verfolgen die Bundesregierung, andere G20-Staaten oder interna­\ntionale Finanzinstitutionen den Vorschlag der T20, in afrikanischen Ländern\nSonderwirtschaftszonen für Migranten und Flüchtlinge einzurichten?\n\nAuf die Antwort zu den Fragen 7 bis 11 wird verwiesen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 10,
+            "answer_page": 10
+          },
+          "question": {
+            "text": "26.\nInwiefern verfolgen die Bundesregierung, andere G20-Staaten oder interna­\ntionale Finanzinstitutionen den Vorschlag der T20, in afrikanischen Ländern\nSonderwirtschaftszonen für Migranten und Flüchtlinge einzurichten?",
+            "question_id": "q26"
+          },
+          "response": {
+            "text": "Auf die Antwort zu den Fragen 7 bis 11 wird verwiesen.",
+            "answer_id": "a26"
+          }
+        },
+        {
+          "iid": "q27-a27",
+          "title": "27.\nHält es die Bundesregierung für realistisch, dass im Rahmen des EU External\nInvestment Plans (EIP) durch den Einsatz von 3,35 Mrd. Euro EU-Mitteln\n44 Mrd. Euro an Investitionskapital nach Afrika fließen (Hebel von 1:13)? Wenn nein, welchen Hebel hält die Bundesregierung für realistisch (bitte je­\nweils mit Begründung)?",
+          "text": "27.\nHält es die Bundesregierung für realistisch, dass im Rahmen des EU External\nInvestment Plans (EIP) durch den Einsatz von 3,35 Mrd. Euro EU-Mitteln\n44 Mrd. Euro an Investitionskapital nach Afrika fließen (Hebel von 1:13)? Wenn nein, welchen Hebel hält die Bundesregierung für realistisch (bitte je­\nweils mit Begründung)?\n\nDie EU-Kommission geht aktuell von einem gemittelten Hebel von 1:11 auf Ba­\nsis bisheriger Erfahrungen aus. Inwieweit dieser realisiert wird, wird u. a. auch\nGegenstand der in der Verordnung des EIP bereits avisierten Evaluierungen ab\n2019 sein.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 10,
+            "answer_page": 10
+          },
+          "question": {
+            "text": "27.\nHält es die Bundesregierung für realistisch, dass im Rahmen des EU External\nInvestment Plans (EIP) durch den Einsatz von 3,35 Mrd. Euro EU-Mitteln\n44 Mrd. Euro an Investitionskapital nach Afrika fließen (Hebel von 1:13)? Wenn nein, welchen Hebel hält die Bundesregierung für realistisch (bitte je­\nweils mit Begründung)?",
+            "question_id": "q27"
+          },
+          "response": {
+            "text": "Die EU-Kommission geht aktuell von einem gemittelten Hebel von 1:11 auf Ba­\nsis bisheriger Erfahrungen aus. Inwieweit dieser realisiert wird, wird u. a. auch\nGegenstand der in der Verordnung des EIP bereits avisierten Evaluierungen ab\n2019 sein.",
+            "answer_id": "a27"
+          }
+        },
+        {
+          "iid": "q28-a28",
+          "title": "28.\nWie soll die „Einforderung von Strukturreformen“ im Rahmen des EIP nach\nInformationen der Bundesregierung konkret erfolgen? Inwiefern sind hier Sanktionsinstrumente vorgesehen, und wer soll die Um­\nsetzung der Strukturreformen überprüfen?",
+          "text": "28.\nWie soll die „Einforderung von Strukturreformen“ im Rahmen des EIP nach\nInformationen der Bundesregierung konkret erfolgen? Inwiefern sind hier Sanktionsinstrumente vorgesehen, und wer soll die Um­\nsetzung der Strukturreformen überprüfen?\n\nWichtige Elemente neben der ersten Säule (Finanzierung) sind die zweite (Tech­\nnische Unterstützung) und die dritte Säule (Verbessertes Investitionsklima) des\nEIP. Im Rahmen von Säule 2 werden konkrete Projekte unterstützt (z. B. im Be­\nreich Governance und Schaffung von Regelwerken), im Fall von Säule 3 ist der\npolitische Dialog zentral (z. B. zu übergreifenden Investitionsbedingungen). Über\nSanktionsinstrumente liegen der Bundesregierung keine Informationen vor. Die\nÜberprüfung des Fortschritts erfolgt gemeinsam zwischen der Europäischen\nKommission, den Mitgliedstaaten und Partnerländern u. a. im Rahmen der ge­\nnannten Dialoge und der vorgesehenen Evaluierungen.",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 10,
+            "answer_page": 10
+          },
+          "question": {
+            "text": "28.\nWie soll die „Einforderung von Strukturreformen“ im Rahmen des EIP nach\nInformationen der Bundesregierung konkret erfolgen? Inwiefern sind hier Sanktionsinstrumente vorgesehen, und wer soll die Um­\nsetzung der Strukturreformen überprüfen?",
+            "question_id": "q28"
+          },
+          "response": {
+            "text": "Wichtige Elemente neben der ersten Säule (Finanzierung) sind die zweite (Tech­\nnische Unterstützung) und die dritte Säule (Verbessertes Investitionsklima) des\nEIP. Im Rahmen von Säule 2 werden konkrete Projekte unterstützt (z. B. im Be­\nreich Governance und Schaffung von Regelwerken), im Fall von Säule 3 ist der\npolitische Dialog zentral (z. B. zu übergreifenden Investitionsbedingungen). Über\nSanktionsinstrumente liegen der Bundesregierung keine Informationen vor. Die\nÜberprüfung des Fortschritts erfolgt gemeinsam zwischen der Europäischen\nKommission, den Mitgliedstaaten und Partnerländern u. a. im Rahmen der ge­\nnannten Dialoge und der vorgesehenen Evaluierungen.",
+            "answer_id": "a28"
+          }
+        },
+        {
+          "iid": "q29-a29",
+          "title": "29.\nInwiefern wird sich die Bundesregierung dafür einsetzen bzw. dagegen aus­\nsprechen, die neuen Weltbank-Richtlinien zu PPP-Verträgen bei vom EIP\nfinanzierten Projekten anzuwenden?",
+          "text": "29.\nInwiefern wird sich die Bundesregierung dafür einsetzen bzw. dagegen aus­\nsprechen, die neuen Weltbank-Richtlinien zu PPP-Verträgen bei vom EIP\nfinanzierten Projekten anzuwenden?\n\nDie neuen Weltbank-Richtlinien sind nicht expliziter Bestandteil der bestehenden\nEIP-Verordnung. Im Kontext der Verordnung weist die Bundesregierung darauf hin, dass die Ver­\nordnung bereits hohe Standards für die Finanzierungen und Investitionen berück­\nsichtig, darunter die „umfassende Wahrung der international vereinbarten Leitli­\nnien, Grundsätze und Übereinkommen, einschließlich der Grundsätze für verant­\nwortungsbewusstes Investment, der Leitprinzipien der Vereinten Nationen für\nWirtschaft und Menschenrechte, der OECD-Leitsätze für multinationale Unter­\nnehmen, der Prinzipien der Ernährungs- und Landwirtschaftsorganisationen der\nVereinten Nationen für verantwortliche Investitionen in die Landwirtschaft und\nNahrungsmittelsysteme und der Übereinkommen der Internationalen Arbeitsor­\nganisationen, sowie der internationalen Menschenrechtsnormen“ (Artikel 9).",
+          "metadata": {
+            "source_name": "18-13697.pdf",
+            "question_page": 10,
+            "answer_page": 10
+          },
+          "question": {
+            "text": "29.\nInwiefern wird sich die Bundesregierung dafür einsetzen bzw. dagegen aus­\nsprechen, die neuen Weltbank-Richtlinien zu PPP-Verträgen bei vom EIP\nfinanzierten Projekten anzuwenden?",
+            "question_id": "q29"
+          },
+          "response": {
+            "text": "Die neuen Weltbank-Richtlinien sind nicht expliziter Bestandteil der bestehenden\nEIP-Verordnung. Im Kontext der Verordnung weist die Bundesregierung darauf hin, dass die Ver­\nordnung bereits hohe Standards für die Finanzierungen und Investitionen berück­\nsichtig, darunter die „umfassende Wahrung der international vereinbarten Leitli­\nnien, Grundsätze und Übereinkommen, einschließlich der Grundsätze für verant­\nwortungsbewusstes Investment, der Leitprinzipien der Vereinten Nationen für\nWirtschaft und Menschenrechte, der OECD-Leitsätze für multinationale Unter­\nnehmen, der Prinzipien der Ernährungs- und Landwirtschaftsorganisationen der\nVereinten Nationen für verantwortliche Investitionen in die Landwirtschaft und\nNahrungsmittelsysteme und der Übereinkommen der Internationalen Arbeitsor­\nganisationen, sowie der internationalen Menschenrechtsnormen“ (Artikel 9).",
+            "answer_id": "a29"
+          }
+        }
+      ],
+      "vorbemerkung_fragesteller": {
+        "iid": "18-13697-vorbemerkung-fragesteller",
+        "title": "Vorbemerkung der Fragesteller",
+        "text": "",
+        "metadata": {
+          "source_name": "18-13697.pdf",
+          "page": null
+        }
+      },
+      "vorbemerkung_bundesregierung": {
+        "iid": "18-13697-vorbemerkung-bundesregierung",
+        "title": "Vorbemerkung der Bundesregierung",
+        "text": "",
+        "metadata": {
+          "source_name": "18-13697.pdf",
+          "page": null
+        }
+      }
+    }
+  ],
+  "filterable_metadata": [
+    {
+      "field": "herausgeber",
+      "label": "Herausgeber",
+      "level": "document",
+      "type": "enum",
+      "multi": false,
+      "values": [
+        "BT"
+      ]
+    },
+    {
+      "field": "herausgeber_lang",
+      "label": "Gremium",
+      "level": "document",
+      "type": "enum",
+      "multi": false,
+      "values": [
+        "Bundestag"
+      ]
+    },
+    {
+      "field": "dokumentart",
+      "label": "Dokumentart",
+      "level": "document",
+      "type": "enum",
+      "multi": false,
+      "values": [
+        "Drucksache"
+      ]
+    },
+    {
+      "field": "wahlperiode",
+      "label": "Wahlperiode",
+      "level": "document",
+      "type": "enum",
+      "multi": false,
+      "values": [
+        "18"
+      ]
+    },
+    {
+      "field": "datum",
+      "label": "Datum",
+      "level": "document",
+      "type": "date",
+      "multi": false,
+      "range": {
+        "min": "2017-10-23",
+        "max": "2017-10-23"
+      }
+    },
+    {
+      "field": "year",
+      "label": "Jahr",
+      "level": "document",
+      "type": "enum",
+      "multi": false,
+      "values": [
+        "2017"
+      ]
+    },
+    {
+      "field": "sachgebiet",
+      "label": "Sachgebiet",
+      "level": "document",
+      "type": "enum",
+      "multi": true,
+      "values": [
+        "Entwicklungspolitik",
+        "Öffentliche Finanzen, Steuern und Abgaben"
+      ]
+    },
+    {
+      "field": "deskriptor",
+      "label": "Deskriptor",
+      "level": "document",
+      "type": "text",
+      "multi": true
+    },
+    {
+      "field": "drucksachetyp",
+      "label": "Drucksachetyp",
+      "level": "document",
+      "type": "enum",
+      "multi": false,
+      "values": [
+        "Antwort"
+      ]
+    },
+    {
+      "field": "urheber",
+      "label": "Urheber",
+      "level": "document",
+      "type": "enum",
+      "multi": true,
+      "values": [
+        "Bundesregierung"
+      ]
+    },
+    {
+      "field": "ressort",
+      "label": "Ressort",
+      "level": "document",
+      "type": "enum",
+      "multi": true,
+      "values": [
+        "Bundesministerium der Finanzen"
+      ]
+    },
+    {
+      "field": "speaker_affiliation",
+      "label": "Fraktion/Partei oder Land",
+      "level": "paragraph",
+      "type": "enum",
+      "multi": false,
+      "values": []
+    },
+    {
+      "field": "speaker_party",
+      "label": "Partei/Fraktion",
+      "level": "paragraph",
+      "type": "enum",
+      "multi": false,
+      "values": []
+    },
+    {
+      "field": "speaker_bundesland",
+      "label": "Bundesland",
+      "level": "paragraph",
+      "type": "enum",
+      "multi": false,
+      "values": []
+    },
+    {
+      "field": "speaker_role",
+      "label": "Rolle",
+      "level": "paragraph",
+      "type": "enum",
+      "multi": false,
+      "values": []
+    },
+    {
+      "field": "speaker_name",
+      "label": "Redner/in",
+      "level": "paragraph",
+      "type": "text",
+      "multi": false
+    },
+    {
+      "field": "agenda_item",
+      "label": "Tagesordnungspunkt",
+      "level": "paragraph",
+      "type": "text",
+      "multi": false
+    }
+  ]
+}

@@ -13,11 +13,12 @@ Pipeline:
 Usage:
   python3 test_report/report.py              # current ISO week
   python3 test_report/report.py --last-week  # previous ISO week
+  python3 test_report/report.py --two-weeks-ago  # week before last
   python3 test_report/report.py 2026 16      # specific year + week number
   python3 test_report/report.py --csv        # write report.xlsx instead of printing
 """
 
-import json, subprocess, sys
+import json, subprocess, sys, os
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
 from collections import defaultdict
@@ -53,11 +54,24 @@ LUNCH_MINUTES    = _rep.get("lunchMinutes",     60)
 LUNCH_START      = _rep.get("lunchStart",   "12:00")
 MIN_PACKAGE_MIN  = _rep.get("minPackageMinutes", 30)
 SKIP_WEB_RESEARCH = _rep.get("skipWebResearch", True)
+SKIP_CALLS       = _rep.get("skipCalls", True)
+
+# ── LLM description rewriting (KIPITZ) ────────────────────────────────────────
+_LLM           = _cfg.get("llm", {})
+LLM_BASE_URL   = _LLM.get("baseUrl", "https://dev1.pc1.kipitz.de/api/app/api/rest_api/v1/")
+MODEL_API      = _LLM.get("modelApi", "openai")
+MODEL_NAME     = _LLM.get("modelName", "google/gemma-4-31B-it")
+TOKENIZER_NAME = _LLM.get("tokenizerName", "mistralai/Mistral-Small-3.1-24B-Base-2503")
+# Generic Teams channel/ad-hoc meeting names always excluded from calls
+_BUILTIN_SKIP_CALL_CONTAINS = {"Besprechung in"}
+SKIP_CALL_CONTAINS = _BUILTIN_SKIP_CALL_CONTAINS | set(_rep.get("skipCallContains", []))
 SKIP_APPS        = {
     "Code", "Finder", "loginwindow", "universalAccessAuthWarn",
     "UserNotificationCenter", "WorkLogger", "Terminal",
     "Safari", "Microsoft Teams",
     "IDLE", "Calendar", "Welcome", "QuickTime Player",
+    "Vorschau", "Microsoft Outlook", "Rechner", "Kalender", "tracker", "Notizen", "Vorschau",
+    "Passwörter", "Passwords", "ClickShare App", "Single Sign-On"
 } | set(_rep.get("skipApps", []))
 # Hardcoded noise that is always filtered regardless of user config
 _BUILTIN_SAFARI_EXACT = {
@@ -385,7 +399,10 @@ def _extract_meeting_name(title: str) -> str | None:
     meaningful = [s for s in segments if s and s not in
                   ("Microsoft Teams", "Calendar", "Kompakte Besprechungsansicht",
                    "Chat", "Calendar | Calendar")]
-    return meaningful[0] if meaningful else None
+    name = meaningful[0] if meaningful else None
+    if name and any(s in name for s in SKIP_CALL_CONTAINS):
+        return None
+    return name
 
 
 def harvest_packages(aggs: list[dict], manual_entries: list[dict]) -> dict[str, list[dict]]:
@@ -404,22 +421,23 @@ def harvest_packages(aggs: list[dict], manual_entries: list[dict]) -> dict[str, 
         claimed_projects: set[str] = set()
 
         # ── Teams calls (detected via window titles) ─────────────────────
-        call_names_seen: set[str] = set()
-        for title in agg.get("teams", []):
-            name = _extract_meeting_name(title)
-            if name and name not in call_names_seen:
-                call_names_seen.add(name)
-                # Estimate call duration from Teams app time, divided by call count
-                teams_calls = [t for t in agg["teams"] if _extract_meeting_name(t)]
-                per_call = agg["app_sec"].get("Microsoft Teams", 0) / max(1, len(teams_calls))
-                weight = max(per_call, 15 * 60)  # at least 15 min
-                packages[date_str].append({
-                    "type": "call",
-                    "description": f"Call: {name}",
-                    "weight": weight,
-                    "source_t0": agg["t0"],
-                    "source_t1": agg["t1"],
-                })
+        if not SKIP_CALLS:
+            call_names_seen: set[str] = set()
+            for title in agg.get("teams", []):
+                name = _extract_meeting_name(title)
+                if name and name not in call_names_seen:
+                    call_names_seen.add(name)
+                    # Estimate call duration from Teams app time, divided by call count
+                    teams_calls = [t for t in agg["teams"] if _extract_meeting_name(t)]
+                    per_call = agg["app_sec"].get("Microsoft Teams", 0) / max(1, len(teams_calls))
+                    weight = max(per_call, 15 * 60)  # at least 15 min
+                    packages[date_str].append({
+                        "type": "call",
+                        "description": f"Call: {name}",
+                        "weight": weight,
+                        "source_t0": agg["t0"],
+                        "source_t1": agg["t1"],
+                    })
 
         # ── Git commits (grouped by repo) ────────────────────────────────
         commits_by_repo: dict[str, list[str]] = {}
@@ -615,7 +633,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 continue
             rows.append({
                 "Wochentag":    dow_de,
-                "Datum":        date.strftime("%-m/%-d/%y"),
+                "Datum":        date.strftime("%-m/%-d/%Y"),
                 "Von":          rs_c.strftime("%H:%M"),
                 "Bis":          re_c.strftime("%H:%M"),
                 "Beschreibung": rdesc,
@@ -655,7 +673,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                     if (call_end - call_start).total_seconds() / 60 >= MIN_PACKAGE_MIN:
                         rows.append({
                             "Wochentag":    dow_de,
-                            "Datum":        date.strftime("%-m/%-d/%y"),
+                            "Datum":        date.strftime("%-m/%-d/%Y"),
                             "Von":          call_start.strftime("%H:%M"),
                             "Bis":          call_end.strftime("%H:%M"),
                             "Beschreibung": pkg["description"],
@@ -676,7 +694,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 if (call_end - fs).total_seconds() / 60 >= MIN_PACKAGE_MIN:
                     rows.append({
                         "Wochentag":    dow_de,
-                        "Datum":        date.strftime("%-m/%-d/%y"),
+                        "Datum":        date.strftime("%-m/%-d/%Y"),
                         "Von":          fs.strftime("%H:%M"),
                         "Bis":          call_end.strftime("%H:%M"),
                         "Beschreibung": pkg["description"],
@@ -740,7 +758,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
 
                 rows.append({
                     "Wochentag":    dow_de,
-                    "Datum":        date.strftime("%-m/%-d/%y"),
+                    "Datum":        date.strftime("%-m/%-d/%Y"),
                     "Von":          cursor.strftime("%H:%M"),
                     "Bis":          end.strftime("%H:%M"),
                     "Beschreibung": pkg["description"],
@@ -753,7 +771,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                     window_idx += 1
 
     # Sort all rows by date + start time
-    rows.sort(key=lambda r: (r["Datum"], r["_start"]))
+    rows.sort(key=lambda r: r["_start"])
 
     # Merge consecutive rows with identical descriptions on the same date
     # but never merge reserved (prefilled) rows — they must keep exact times
@@ -872,6 +890,150 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
     wb.save(path)
     print(f"✅  Written to {path}")
 
+# ── LLM description rewriting ──────────────────────────────────────────────────
+# The whole "Beschreibung" column is rewritten in a single call: one line in,
+# one line out, order preserved. The few-shot pair below (a real column and its
+# desired German rewrite) teaches the wording and to leave fixed meetings alone.
+_LLM_SYSTEM = (
+    "Du formulierst die Spalte 'Beschreibung' eines wöchentlichen "
+    "Arbeitszeitberichts in eine einheitliche, formelle deutsche Fassung um.\n"
+    "Regeln:\n"
+    "- Die Eingabe ist eine Liste von Zeilen (eine Beschreibung pro Zeile).\n"
+    "- Gib exakt eine Ausgabezeile pro Eingabezeile zurück, in gleicher "
+    "Reihenfolge. Füge keine Zeilen hinzu und lasse keine weg.\n"
+    "- Übersetze englische Commit-Nachrichten und technische Stichworte ins "
+    "Deutsche und formuliere sie als knappe, sachliche Tätigkeit.\n"
+    "- Projekt- und App-Namen werden zu 'Weiterentwickeln der …'.\n"
+    "- Geplante Besprechungen und feste Termine bleiben unverändert.\n"
+    "- Gib ausschließlich die umformulierten Zeilen zurück, ohne Nummerierung, "
+    "ohne Anführungszeichen und ohne zusätzlichen Text."
+)
+
+# Few-shot: an example column (user) and its desired rewrite (assistant).
+_FEWSHOT_INPUT = """GPT4Gov-Dok-Vergleich
+GPT4Gov-Dok-Vergleich
+GPT4Gov-Lib-File-Processing
+[GPT4Gov-Lib-File-Processing] Fallback tables more markdown like, join blcoks with new lines instead of whitespace
+GPT4Gov-Lib-RAG
+GPT4Gov-Dok-Vergleich
+GPT4Gov-RAG-Apps
+JF Status ITZBund
+GPT4Gov-RAG-Apps
+[GPT4Gov-Lib-File-Processing] refactor(models): hold image bytes instead of a base64 data URI
+[GPT4Gov-Dok-Vergleich] archived docs deleted, reasoning stop for verification
+GPT4Gov-Doc_Translation
+GPT4Gov-Dok-Vergleich
+Daily StandUp (ITZBund)
+GPT4Gov-Dok-Vergleich
+[GPT4Gov-Dok-Vergleich] rewrites shortened, renames of configs
+[GPT4Gov-Dok-Vergleich] rewrites shortened, renames of configs
+Weekly App Integration
+Area Apps Weekly
+JF Entwicklung & Demos BMF
+[GPT4Gov-Dok-Vergleich] rewrites shortened, renames of configs
+GPT4Gov-RAG-Apps
+GPT4Gov-Dok-Vergleich
+Daily StandUp (ITZBund)
+GPT4Gov-Dok-Vergleich
+Weekly SWE-Team
+GPT4Gov-Dok-Vergleich
+Weekly Checkout
+GPT4Gov-Dok-Vergleich
+Daily StandUp (ITZBund)
+GPT4Gov-Dok-Vergleich
+GPT4Gov-Dok-Vergleich
+GPT4Gov-Lib-RAG
+[GPT4Gov-Lib-File-Processing] feat(layout-ocr): follow model reading order, strip page numbers/headers, fix chunk bounding boxes
+[GPT4Gov-Lib-File-Processing] deduplication of single headings
+[GPT4Gov-Dok-Vergleich] gitignore"""
+
+_FEWSHOT_OUTPUT = """Weiterentwickeln der Dokumente-Vergleichen-App
+Weiterentwickeln der Dokumente-Vergleichen-App
+Weiterentwickeln der Dateiverarbeitung
+[Dateiverarbeitung] Fallback-Tabellen und Block-Verknüpfung verbessert
+Weiterentwickeln der RAG-Bibliothek
+Weiterentwickeln der Dokumente-Vergleichen-App
+Weiterentwickeln der RAG-Apps
+JF Status ITZBund
+Weiterentwickeln der RAG-Apps
+[Dateiverarbeitung] Bilddaten als Bytes statt Base64 gespeichert
+[Dokumente-Vergleichen] Archivdokumente gelöscht und Verifikationslogik angepasst
+Weiterentwickeln der Dokumentübersetzung
+Weiterentwickeln der Dokumente-Vergleichen-App
+Daily StandUp (ITZBund)
+Weiterentwickeln der Dokumente-Vergleichen-App
+[Dokumente-Vergleichen] Rewrites gekürzt und Konfigurationen umbenannt
+[Dokumente-Vergleichen] Rewrites gekürzt und Konfigurationen umbenannt
+Weekly App Integration
+Area Apps Weekly
+JF Entwicklung & Demos BMF
+[Dokumente-Vergleichen] Rewrites gekürzt und Konfigurationen umbenannt
+Weiterentwickeln der RAG-Apps
+Weiterentwickeln der Dokumente-Vergleichen-App
+Daily StandUp (ITZBund)
+Weiterentwickeln der Dokumente-Vergleichen-App
+Weekly SWE-Team
+Weiterentwickeln der Dokumente-Vergleichen-App
+Weekly Checkout
+Weiterentwickeln der Dokumente-Vergleichen-App
+Daily StandUp (ITZBund)
+Weiterentwickeln der Dokumente-Vergleichen-App
+Weiterentwickeln der Dokumente-Vergleichen-App
+Weiterentwickeln der RAG-Bibliothek
+[Dateiverarbeitung] Layout-OCR, Lesereihenfolge und Bounding Boxes korrigiert
+[Dateiverarbeitung] Doppelte Einzelüberschriften bereinigt
+[Dokumente-Vergleichen] Gitignore ergänzt"""
+
+
+def _load_api_key() -> str:
+    """KIPITZ API key from the environment, falling back to the repo-root .env."""
+    key = os.environ.get("KIPITZ_API_KEY")
+    if not key:
+        env_path = Path(__file__).parent.parent / ".env"
+        if env_path.exists():
+            for line in env_path.read_text().splitlines():
+                line = line.strip()
+                if line.startswith("KIPITZ_API_KEY="):
+                    key = line.split("=", 1)[1].strip()
+                    break
+    if not key:
+        raise RuntimeError("KIPITZ_API_KEY not found in environment or repo-root .env")
+    return key
+
+
+def _llm_client():
+    if MODEL_API != "openai":
+        raise NotImplementedError(f"Unsupported MODEL_API: {MODEL_API!r}")
+    from openai import OpenAI
+    return OpenAI(base_url=LLM_BASE_URL, api_key=_load_api_key())
+
+
+def llm_rewrite_descriptions(rows: list[dict]) -> None:
+    """Rewrite the whole 'Beschreibung' column in a single LLM call — one output
+    line per input row, order preserved. On a line-count mismatch the column is
+    cleared (the alignment can no longer be trusted)."""
+    descs = [r.get("Beschreibung", "") for r in rows]
+    if not descs:
+        return
+    client = _llm_client()
+    resp = client.chat.completions.create(
+        model=MODEL_NAME,
+        temperature=0.2,
+        messages=[
+            {"role": "system",    "content": _LLM_SYSTEM},
+            {"role": "user",      "content": _FEWSHOT_INPUT},
+            {"role": "assistant", "content": _FEWSHOT_OUTPUT},
+            {"role": "user",      "content": "\n".join(descs)},
+        ],
+    )
+    out = (resp.choices[0].message.content or "").strip("\n").split("\n")
+    if len(out) != len(descs):
+        for r in rows:
+            r["Beschreibung"] = ""
+        return
+    for r, line in zip(rows, out):
+        r["Beschreibung"] = line.strip()
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -888,7 +1050,11 @@ if __name__ == "__main__":
             break
 
     now  = datetime.now()
-    if "--last-week" in flags:
+    if "--two-weeks-ago" in flags:
+        last = now - timedelta(weeks=2)
+        year = int(args[0]) if len(args) > 0 else last.isocalendar().year
+        week = int(args[1]) if len(args) > 1 else last.isocalendar().week
+    elif "--last-week" in flags:
         last = now - timedelta(weeks=1)
         year = int(args[0]) if len(args) > 0 else last.isocalendar().year
         week = int(args[1]) if len(args) > 1 else last.isocalendar().week
@@ -919,6 +1085,9 @@ if __name__ == "__main__":
     print(f"  {total_pkgs} work packages across {len(packages)} day(s)")
 
     rows = make_rows(aggs, manual_entries, packages)
+
+    print("  rewriting descriptions via LLM…")
+    llm_rewrite_descriptions(rows)
 
     print()
     print_table(rows)

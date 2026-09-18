@@ -1,6 +1,12 @@
 {
   "logDirectory": "/Users/rvonlottne001/Documents/logs/jsonl",
   "idleThresholdSeconds": 300,
+  "llm": {
+    "baseUrl": "https://dev1.pc1.kipitz.de/api/app/api/rest_api/v1/",
+    "modelApi": "openai",
+    "modelName": "google/gemma-4-31B-it",
+    "tokenizerName": "mistralai/Mistral-Small-3.1-24B-Base-2503"
+  },
   "report": {
     "repositories": [
       "/Users/rvonlottne001/repositories/GPT4Gov-Lib-File-Processing",

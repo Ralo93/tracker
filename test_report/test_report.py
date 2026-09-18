@@ -116,14 +116,14 @@ class TestHarvestPackages(unittest.TestCase):
         self.assertEqual(pkg["description"], "Sprint Planning")
         self.assertEqual(pkg["weight"], 30 * 60)
 
-    def test_teams_call_harvested(self):
-        """Teams call window → call package."""
+    def test_teams_call_not_harvested(self):
+        """Teams call windows no longer create call packages (calls disabled)."""
         agg = _make_agg("2026-04-13", "09:00", "10:00",
                         teams=["Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"],
                         app_sec={"Microsoft Teams": 1800})
         pkgs = report.harvest_packages([agg], [])
-        descs = [p["description"] for p in pkgs["2026-04-13"]]
-        self.assertIn("Call: Florentin Rauscher", descs)
+        calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
+        self.assertEqual(len(calls), 0)
 
     def test_teams_chat_not_harvested(self):
         """Teams chat windows should not create packages."""
@@ -255,7 +255,7 @@ class TestBudgetFill(unittest.TestCase):
             _make_pkg("D", 45, t0="14:00", t1="14:45"),
         ]}
         rows = report.make_rows([agg], [], pkgs)
-        same_date = [r for r in rows if r["Datum"] == "4/13/26"]
+        same_date = [r for r in rows if r["Datum"] == "4/13/2026"]
         for i in range(len(same_date) - 1):
             self.assertLessEqual(same_date[i]["Bis"], same_date[i + 1]["Von"],
                                  f"Overlap: {same_date[i]} vs {same_date[i+1]}")
@@ -268,7 +268,7 @@ class TestBudgetFill(unittest.TestCase):
             _make_pkg("B", 120),
         ]}
         rows = report.make_rows([agg], [], pkgs)
-        work_rows = [r for r in rows if r["Datum"] == "4/13/26"]
+        work_rows = [r for r in rows if r["Datum"] == "4/13/2026"]
         for i in range(len(work_rows) - 1):
             gap_start = work_rows[i]["Bis"]
             gap_end = work_rows[i + 1]["Von"]
@@ -377,7 +377,7 @@ class TestBudgetFill(unittest.TestCase):
             "2026-04-16": [_make_pkg("Work", 300, date_str="2026-04-16", t0="10:00", t1="16:30")],
         }
         rows = report.make_rows(aggs, [], pkgs)
-        for datum_fmt in ("4/15/26", "4/16/26"):
+        for datum_fmt in ("4/15/2026", "4/16/2026"):
             day_rows = [r for r in rows if r["Datum"] == datum_fmt]
             day_total = _total_row_minutes(day_rows)
             self.assertLessEqual(day_total, report.DAY_HOURS * 60,
@@ -419,15 +419,14 @@ class TestBudgetFill(unittest.TestCase):
 
 class TestTeamsFiltering(unittest.TestCase):
 
-    def test_meeting_creates_call_package(self):
-        """Teams window with Kompakte Besprechungsansicht → call package."""
+    def test_meeting_creates_no_call_package(self):
+        """Teams meeting window no longer creates a call package (calls disabled)."""
         agg = _make_agg("2026-04-13", "09:00", "09:30", teams=[
             "Florentin Rauscher | Kompakte Besprechungsansicht | Microsoft Teams"
         ], app_sec={"Microsoft Teams": 1800})
         pkgs = report.harvest_packages([agg], [])
         calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
-        self.assertEqual(len(calls), 1)
-        self.assertEqual(calls[0]["description"], "Call: Florentin Rauscher")
+        self.assertEqual(len(calls), 0)
 
     def test_chat_no_package(self):
         """Teams chat → no call package."""
@@ -439,7 +438,7 @@ class TestTeamsFiltering(unittest.TestCase):
         self.assertEqual(len(calls), 0)
 
     def test_mixed_chat_and_meeting(self):
-        """Only the meeting creates a call package."""
+        """Neither chat nor meeting creates a call package (calls disabled)."""
         agg = _make_agg("2026-04-13", "09:00", "10:00", teams=[
             "KI@BMF Dev | Chat | Microsoft Teams",
             "Sven Metscher | Kompakte Besprechungsansicht | Microsoft Teams",
@@ -447,8 +446,7 @@ class TestTeamsFiltering(unittest.TestCase):
         ], app_sec={"Microsoft Teams": 3600})
         pkgs = report.harvest_packages([agg], [])
         calls = [p for p in pkgs.get("2026-04-13", []) if p["type"] == "call"]
-        self.assertEqual(len(calls), 1)
-        self.assertEqual(calls[0]["description"], "Call: Sven Metscher")
+        self.assertEqual(len(calls), 0)
 
     def test_noise_meeting_title_no_package(self):
         """Meeting with only noise segments → no call package."""

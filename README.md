@@ -69,5 +69,9 @@ Each day produces a `YYYY-MM-DD.jsonl` file:
 {"description":"Sprint Planning Prep","duration_minutes":60,"event":"manual_entry","time":"17:45","timestamp":"2026-04-15T17:45:33"}
 ```
 
+## Generate Report
+
+```sh
 python3 test_report/report.py --last-week --xlsx
+```
 

@@ -36,6 +36,23 @@ To add a new repo:
 
 ---
 
+## LLM description rewriting (`config.json` → top-level `llm` section)
+
+Before the report is finalized, the whole `Beschreibung` column is rewritten in a
+single LLM call (see Step 8) to apply the required German activity wording.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `baseUrl` | KIPITZ endpoint | OpenAI-compatible base URL |
+| `modelApi` | `openai` | Only `openai` is implemented |
+| `modelName` | `google/gemma-4-31B-it` | Generation model |
+| `tokenizerName` | `mistralai/Mistral-Small-3.1-24B-Base-2503` | Tokenizer reference |
+
+Requires the `openai` package (see [requirements.txt](requirements.txt)) and a
+`KIPITZ_API_KEY`, read from the environment or the repo-root `.env`.
+
+---
+
 ## Pipeline steps
 
 ### Step 1 — Load events
@@ -120,7 +137,7 @@ If no slot contains it (e.g. commit made during a break or before WorkLogger sta
 Each slot's description is built in priority order:
 
 1. **Teams meetings** — meaningful name extracted from window title
-2. **Commits** — prefixed with `COMMIT [repo]:` as a strong signal
+2. **Commits** — prefixed with `[repo]` as a strong signal
 3. **VS Code projects** — only those with ≥ 60s, excluded: `Save As`, `unknown`
 4. **Other apps** — all apps with ≥ 30s, excluded via `skipApps` config (Finder, Terminal, etc.)
 5. **Safari tabs** — top 5 after filtering noise via `skipSafariExact` / `skipSafariContains`
@@ -134,6 +151,18 @@ After rounding, adjacent slots are checked for overlap and clipped so no two row
 Zero-duration rows are dropped.
 
 Output columns: `Wochentag | Datum | Von | Bis | Beschreibung`
+
+---
+
+### Step 8 — LLM description rewriting
+
+The entire `Beschreibung` column is sent to the configured LLM in a **single call**
+(one line per row, order preserved) and rewritten into the required German wording.
+A few-shot example teaches the phrasing and leaves fixed meetings unchanged.
+
+- Runs on every export; a missing `KIPITZ_API_KEY` raises and aborts the report.
+- If the model returns a different number of lines than were sent, the alignment
+  can't be trusted and the column is cleared.
 
 ---
 
