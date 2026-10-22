@@ -633,7 +633,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 continue
             rows.append({
                 "Wochentag":    dow_de,
-                "Datum":        date.strftime("%-m/%-d/%Y"),
+                "Datum":        date.strftime("%d.%m.%y"),
                 "Von":          rs_c.strftime("%H:%M"),
                 "Bis":          re_c.strftime("%H:%M"),
                 "Beschreibung": rdesc,
@@ -673,7 +673,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                     if (call_end - call_start).total_seconds() / 60 >= MIN_PACKAGE_MIN:
                         rows.append({
                             "Wochentag":    dow_de,
-                            "Datum":        date.strftime("%-m/%-d/%Y"),
+                            "Datum":        date.strftime("%d.%m.%y"),
                             "Von":          call_start.strftime("%H:%M"),
                             "Bis":          call_end.strftime("%H:%M"),
                             "Beschreibung": pkg["description"],
@@ -694,7 +694,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
                 if (call_end - fs).total_seconds() / 60 >= MIN_PACKAGE_MIN:
                     rows.append({
                         "Wochentag":    dow_de,
-                        "Datum":        date.strftime("%-m/%-d/%Y"),
+                        "Datum":        date.strftime("%d.%m.%y"),
                         "Von":          fs.strftime("%H:%M"),
                         "Bis":          call_end.strftime("%H:%M"),
                         "Beschreibung": pkg["description"],
@@ -758,7 +758,7 @@ def make_rows(aggs: list[dict], manual_entries: list[dict] = [],
 
                 rows.append({
                     "Wochentag":    dow_de,
-                    "Datum":        date.strftime("%-m/%-d/%Y"),
+                    "Datum":        date.strftime("%d.%m.%y"),
                     "Von":          cursor.strftime("%H:%M"),
                     "Bis":          end.strftime("%H:%M"),
                     "Beschreibung": pkg["description"],

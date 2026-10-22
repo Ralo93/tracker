@@ -255,7 +255,7 @@ class TestBudgetFill(unittest.TestCase):
             _make_pkg("D", 45, t0="14:00", t1="14:45"),
         ]}
         rows = report.make_rows([agg], [], pkgs)
-        same_date = [r for r in rows if r["Datum"] == "4/13/2026"]
+        same_date = [r for r in rows if r["Datum"] == "13.04.26"]
         for i in range(len(same_date) - 1):
             self.assertLessEqual(same_date[i]["Bis"], same_date[i + 1]["Von"],
                                  f"Overlap: {same_date[i]} vs {same_date[i+1]}")
@@ -268,7 +268,7 @@ class TestBudgetFill(unittest.TestCase):
             _make_pkg("B", 120),
         ]}
         rows = report.make_rows([agg], [], pkgs)
-        work_rows = [r for r in rows if r["Datum"] == "4/13/2026"]
+        work_rows = [r for r in rows if r["Datum"] == "13.04.26"]
         for i in range(len(work_rows) - 1):
             gap_start = work_rows[i]["Bis"]
             gap_end = work_rows[i + 1]["Von"]
@@ -377,11 +377,20 @@ class TestBudgetFill(unittest.TestCase):
             "2026-04-16": [_make_pkg("Work", 300, date_str="2026-04-16", t0="10:00", t1="16:30")],
         }
         rows = report.make_rows(aggs, [], pkgs)
-        for datum_fmt in ("4/15/2026", "4/16/2026"):
+        for datum_fmt in ("15.04.26", "16.04.26"):
             day_rows = [r for r in rows if r["Datum"] == datum_fmt]
             day_total = _total_row_minutes(day_rows)
             self.assertLessEqual(day_total, report.DAY_HOURS * 60,
                                  f"{datum_fmt}: {day_total}min exceeds budget")
+
+    def test_dates_use_german_format(self):
+        """User-facing report dates use zero-padded DD.MM.YY format."""
+        agg = _make_agg("2026-10-13", "09:00", "10:00")
+        rows = report.make_rows([agg], [], {"2026-10-13": [_make_pkg(
+            "Work", 60, date_str="2026-10-13")
+        ]})
+        self.assertTrue(rows)
+        self.assertTrue(all(r["Datum"] == "13.10.26" for r in rows))
 
     def test_early_start_late_meeting_clipped(self):
         """Events start early enough that late meeting falls outside day_end — clipped."""

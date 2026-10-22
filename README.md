@@ -75,3 +75,7 @@ Each day produces a `YYYY-MM-DD.jsonl` file:
 python3 test_report/report.py --last-week --xlsx
 ```
 
+```sh
+uv run python test_report/report.py --two-weeks-ago --xlsx
+```
+
