@@ -1364,7 +1364,7 @@ public class QuickLogWindowController: NSObject, NSWindowDelegate {
 
 public class ExportController: NSObject {
 
-    func run() {
+    func run(lastWeek: Bool = false) {
         guard let python3 = findPython3() else {
             alert("Export Failed", "Python 3 not found.\nInstall via pyenv or Homebrew, then rebuild the app.")
             return
@@ -1375,9 +1375,9 @@ public class ExportController: NSObject {
         }
 
         let cal  = Calendar(identifier: .iso8601)
-        let now  = Date()
-        let week = cal.component(.weekOfYear, from: now)
-        let year = cal.component(.yearForWeekOfYear, from: now)
+        let date = cal.date(byAdding: .weekOfYear, value: lastWeek ? -1 : 0, to: Date())!
+        let week = cal.component(.weekOfYear, from: date)
+        let year = cal.component(.yearForWeekOfYear, from: date)
 
         let panel = NSSavePanel()
         if #available(macOS 12, *) {
@@ -1397,7 +1397,9 @@ public class ExportController: NSObject {
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: python3)
-        process.arguments = [scriptPath, String(year), String(week), "--xlsx", "--out", outURL.path]
+        var arguments = [scriptPath, String(year), String(week), "--xlsx", "--out", outURL.path]
+        if lastWeek { arguments.append("--last-week") }
+        process.arguments = arguments
         // Ensure the bundled venv's site-packages are found even if Python
         // resolves to a different system interpreter on the user's machine.
         if let resourcePath = Bundle.main.resourcePath {
@@ -1661,6 +1663,11 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
             action: #selector(exportReport),
             keyEquivalent: "e"
         ))
+        menu.addItem(NSMenuItem(
+            title: "Export Report (Last Week)",
+            action: #selector(exportLastWeekReport),
+            keyEquivalent: ""
+        ))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(
             title: "Settings",
@@ -1745,6 +1752,8 @@ public class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openQuickLog() { quickLogController.show() }
 
     @objc func exportReport() { exportController.run() }
+
+    @objc func exportLastWeekReport() { exportController.run(lastWeek: true) }
 
     /// Art. 15 — Right of access: export all personal data as a zip of JSONL files + config.
     @objc func exportAllData() {

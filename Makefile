@@ -32,6 +32,8 @@ app: build
 	mkdir -p "$(APP_BUNDLE)/Contents/Resources"
 	cp "$(BINARY)" "$(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)"
 	cp config.json "$(APP_BUNDLE)/Contents/Resources/config.json"
+	cp .env "$(APP_BUNDLE)/Contents/Resources/.env"
+	chmod 600 "$(APP_BUNDLE)/Contents/Resources/.env"
 	cp test_report/report.py "$(APP_BUNDLE)/Contents/Resources/report.py"
 	@echo "🐍 Creating bundled Python environment..."
 	python3 -m venv "$(APP_BUNDLE)/Contents/Resources/venv"

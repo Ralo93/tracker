@@ -49,7 +49,8 @@ single LLM call (see Step 8) to apply the required German activity wording.
 | `tokenizerName` | `mistralai/Mistral-Small-3.1-24B-Base-2503` | Tokenizer reference |
 
 Requires the `openai` package (see [requirements.txt](requirements.txt)) and a
-`KIPITZ_API_KEY`, read from the environment or the repo-root `.env`.
+`KIPITZ_API_KEY`, read from the environment or the repo-root `.env`. `make app`
+copies `.env` into `WorkLogger.app/Contents/Resources/.env` so menu-bar exports can use it.
 
 ---
 

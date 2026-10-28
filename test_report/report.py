@@ -986,18 +986,20 @@ Weiterentwickeln der RAG-Bibliothek
 
 
 def _load_api_key() -> str:
-    """KIPITZ API key from the environment, falling back to the repo-root .env."""
+    """KIPITZ API key from the environment or a nearby .env file."""
     key = os.environ.get("KIPITZ_API_KEY")
     if not key:
-        env_path = Path(__file__).parent.parent / ".env"
-        if env_path.exists():
-            for line in env_path.read_text().splitlines():
-                line = line.strip()
-                if line.startswith("KIPITZ_API_KEY="):
-                    key = line.split("=", 1)[1].strip()
-                    break
+        for env_path in (Path(__file__).parent / ".env", Path(__file__).parent.parent / ".env"):
+            if env_path.exists():
+                for line in env_path.read_text().splitlines():
+                    line = line.strip()
+                    if line.startswith("KIPITZ_API_KEY="):
+                        key = line.split("=", 1)[1].strip()
+                        break
+            if key:
+                break
     if not key:
-        raise RuntimeError("KIPITZ_API_KEY not found in environment or repo-root .env")
+        raise RuntimeError("KIPITZ_API_KEY not found in environment or .env")
     return key
 
 

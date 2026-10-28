@@ -13,8 +13,13 @@ xcode-select --install
 # Build & install
 git clone -b main https://github.com/Ralo93/tracker.git WorkLogger
 cd WorkLogger
+cp .env.example .env
+# Set KIPITZ_API_KEY in .env before building.
 make app
 ```
+
+`KIPITZ_API_KEY` is required to rewrite report descriptions through the configured LLM.
+`make app` copies `.env` into the app bundle's resources so both **WL** → **Export Report** actions can use it. Keep `.env` private; it is ignored by Git.
 
 Once the build succeeds `WorkLogger.app` is installed to `/Applications` and launches automatically.
 Grant every permission it requests (Accessibility, Screen Recording, Safari Automation) — you may need to enter your password.
