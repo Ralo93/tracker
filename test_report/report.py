@@ -877,8 +877,12 @@ def write_xlsx(rows: list[dict], path: Path) -> None:
         fill = alt_fill if row_idx % 2 == 0 else None
         for col, key in enumerate(key_map, start=1):
             val = row.get(key, "") if key else ""
+            if key == "Datum":
+                val = datetime.strptime(val, "%d.%m.%y").date()
             cell = ws.cell(row=row_idx, column=col, value=val)
             cell.alignment = Alignment(wrap_text=True, vertical="top")
+            if key == "Datum":
+                cell.number_format = "dd/mm/yyyy"
             if fill:
                 cell.fill = fill
         # auto height: 15pt per line in description col

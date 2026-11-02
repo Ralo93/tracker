@@ -6,9 +6,11 @@ Run: python3 -m pytest test_report/test_report.py -v
   or: python3 test_report/test_report.py
 """
 
-import sys, unittest
+import sys, tempfile, unittest
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import openpyxl
 
 # Ensure the test_report module is importable
 sys.path.insert(0, str(Path(__file__).parent))
@@ -391,6 +393,22 @@ class TestBudgetFill(unittest.TestCase):
         ]})
         self.assertTrue(rows)
         self.assertTrue(all(r["Datum"] == "13.10.26" for r in rows))
+
+    def test_excel_dates_use_full_slash_format(self):
+        """Excel date cells display as DD/MM/YYYY."""
+        agg = _make_agg("2026-10-26", "09:00", "10:00")
+        rows = report.make_rows([agg], [], {"2026-10-26": [_make_pkg(
+            "Work", 60, date_str="2026-10-26")
+        ]})
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "report.xlsx"
+            report.write_xlsx(rows, path)
+            workbook = openpyxl.load_workbook(path)
+            cell = workbook["Report"]["B2"]
+
+        self.assertEqual(cell.value.date(), datetime(2026, 10, 26).date())
+        self.assertEqual(cell.number_format, "dd/mm/yyyy")
 
     def test_early_start_late_meeting_clipped(self):
         """Events start early enough that late meeting falls outside day_end — clipped."""
